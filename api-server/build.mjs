@@ -90,6 +90,7 @@ async function buildAll() {
       "sequelize",
       "serialport",
       "snappy",
+      "thread-stream",
       "tinypool",
       "usb",
       "workerd",

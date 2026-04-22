@@ -1,306 +1,589 @@
-import React, { useState } from 'react';
-import { useAppStore } from '../store';
-import { StatStrip } from '../components/stat-strip';
-import { RightPanel, PanelSection } from '../components/right-panel';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
-import { Radio, ArrowRight, Building2, ExternalLink, Activity, ArrowUpRight, CheckCircle2 } from 'lucide-react';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import React, { useState } from "react";
+import { useAppStore } from "../store";
+import { StatStrip } from "../components/stat-strip";
+import {
+  RightPanel,
+  PanelSection,
+  ConfidenceScore,
+} from "../components/right-panel";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Radio,
+  AlertTriangle,
+  TrendingDown,
+  TrendingUp,
+  Zap,
+  ArrowUpRight,
+  ArrowRight,
+  Play,
+  CheckCircle2,
+  ChevronDown,
+  Building2,
+  Clock,
+  Target,
+  Shield,
+} from "lucide-react";
 
-const SIGNAL_TYPE_TO_LANE: Record<string, { id: string; name: string }> = {
-  'Leadership Change': { id: 'lane1', name: 'Hot Follow-Up' },
-  'Competitor Pricing': { id: 'lane2', name: 'Competitor Switch Targets' },
-  'Funding Round': { id: 'lane1', name: 'Hot Follow-Up' },
-  'Hiring Surge': { id: 'lane4', name: 'Cold Resurrection' },
-};
+const INTEL_STREAMS = [
+  { label: "All Signals", count: 124, severity: "high" },
+  { label: "Competitor Moves", count: 9, severity: "high" },
+  { label: "Pricing Movements", count: 6, severity: "high" },
+  { label: "Market Signals", count: 22, severity: "medium" },
+  { label: "Technology Changes", count: 14, severity: "medium" },
+  { label: "Hiring Surges", count: 18, severity: "medium" },
+  { label: "Customer Sentiment", count: 31, severity: "low" },
+  { label: "Supplier Signals", count: 24, severity: "low" },
+];
+
+const SAVED_VIEWS = [
+  "High Threat",
+  "Immediate Opportunities",
+  "Outbound Impacting Signals",
+];
+
+const COMPETITOR_CARDS = [
+  {
+    id: "c1",
+    name: "RepairDesk",
+    move: "Raised subscription prices 15% — effective July 1",
+    direction: "opportunity" as const,
+    impact: "High",
+    affectedLeads: 8,
+    timestamp: "4h ago",
+    summary:
+      "3 of your active prospects are on RepairDesk. Switching window is open for 6–8 weeks. Response pack ready.",
+  },
+  {
+    id: "c2",
+    name: "Workshop Wizard",
+    move: "Service outage — 3 workshops in your territory affected",
+    direction: "opportunity" as const,
+    impact: "High",
+    affectedLeads: 3,
+    timestamp: "1d ago",
+    summary:
+      "Outage affected 3 workshops you're currently nurturing. Engagement window open while they're frustrated with their current tool.",
+  },
+  {
+    id: "c3",
+    name: "Protractor",
+    move: "Launched new tyre module — targeting fleet accounts",
+    direction: "threat" as const,
+    impact: "Medium",
+    affectedLeads: 2,
+    timestamp: "2d ago",
+    summary:
+      "Protractor is moving into fleet tyre services — overlaps with 2 of your Canning Vale / Broome fleet prospects. Monitor closely.",
+  },
+];
+
+const MARKET_SIGNALS = [
+  {
+    id: "m1",
+    type: "Pricing",
+    source: "Burson Auto Parts",
+    event: "Brake pad line up 14% — 3 upcoming Hilux services affected",
+    impact: "High",
+    timestamp: "2h ago",
+    direction: "threat" as const,
+  },
+  {
+    id: "m2",
+    type: "Hiring",
+    source: "Northside Auto & Tyre",
+    event: "Workshop Manager + BDM roles posted on SEEK — growth phase signal",
+    impact: "Medium",
+    timestamp: "1d ago",
+    direction: "opportunity" as const,
+  },
+  {
+    id: "m3",
+    type: "Technology",
+    source: "Canning Vale Fleet Services",
+    event: "Fleetmatics end-of-life announced — fleet management gap by Q4",
+    impact: "High",
+    timestamp: "2d ago",
+    direction: "opportunity" as const,
+  },
+  {
+    id: "m4",
+    type: "Regulation",
+    source: "VicRoads",
+    event:
+      "Updated RWC checklist adds ADAS recalibration from July 1 — affects 34% of your fleet",
+    impact: "Medium",
+    timestamp: "1d ago",
+    direction: "threat" as const,
+  },
+  {
+    id: "m5",
+    type: "Pricing",
+    source: "ATO",
+    event:
+      "Super guarantee rises to 11.5% from July 1 — payroll provision impact",
+    impact: "Medium",
+    timestamp: "1d ago",
+    direction: "threat" as const,
+  },
+  {
+    id: "m6",
+    type: "Leadership",
+    source: "O'Brien Auto Group",
+    event:
+      "New Operations Manager appointed — process improvement initiative signalled",
+    impact: "High",
+    timestamp: "2h ago",
+    direction: "opportunity" as const,
+  },
+];
+
+const impactBadge = (impact: string) =>
+  impact === "High"
+    ? "bg-amber-500/20 text-amber-400 border-amber-500/30"
+    : impact === "Medium"
+      ? "bg-primary/20 text-primary border-primary/30"
+      : "bg-secondary text-muted-foreground border-border";
+
+const directionIcon = (d: "threat" | "opportunity") =>
+  d === "opportunity" ? (
+    <TrendingUp className="w-3.5 h-3.5 text-green-400" />
+  ) : (
+    <TrendingDown className="w-3.5 h-3.5 text-red-400" />
+  );
 
 export default function SignalEngine() {
-  const { signals, leads, outboundLanes, addLeadToLane, logActivity } = useAppStore();
+  const {
+    signals,
+    leads,
+    outboundLanes,
+    responsePacks,
+    addLeadToLane,
+    approveResponsePack,
+    logActivity,
+  } = useAppStore();
   const { toast } = useToast();
-  
-  const [focusedSignalId, setFocusedSignalId] = useState<string | null>(signals[0]?.id || null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const focusedSignal = signals.find(s => s.id === focusedSignalId);
+  const [activeStream, setActiveStream] = useState("All Signals");
+  const [focusedCompetitorId, setFocusedCompetitorId] = useState<string | null>(
+    COMPETITOR_CARDS[0].id,
+  );
+  const [focusedSignalId, setFocusedSignalId] = useState<string | null>(null);
+  const [strategyMode, setStrategyMode] = useState<
+    "Monitor" | "Recommend" | "Deploy"
+  >("Recommend");
+  const [timeWindow, setTimeWindow] = useState("7d");
 
-  const resolveTarget = () => {
-    if (!focusedSignal) return null;
-    const laneSpec = SIGNAL_TYPE_TO_LANE[focusedSignal.type] ?? { id: 'lane2', name: 'Competitor Switch Targets' };
-    const matchedLead =
-      leads.find(l => l.company === focusedSignal.company) ??
-      leads.find(l => !outboundLanes.find(ln => ln.id === laneSpec.id)?.leadIds.includes(l.id)) ??
-      leads[0];
-    return { laneSpec, leadId: matchedLead?.id };
-  };
+  const focusedCompetitor = COMPETITOR_CARDS.find(
+    (c) => c.id === focusedCompetitorId,
+  );
+  const pendingPacks = responsePacks.filter((rp) => rp.status === "pending");
 
-  const handleRouteToCRM = () => {
-    toast({ title: "Routed to CRM", description: `${focusedSignal?.company ?? 'Company'} added to CRM watch list.` });
-    logActivity({ type: 'Signal', description: `Routed ${focusedSignal?.company} to CRM based on ${focusedSignal?.type} signal` });
-  };
-
-  const handleSendToOutbound = () => {
-    const target = resolveTarget();
-    if (!target?.leadId) return;
-    addLeadToLane(target.laneSpec.id, target.leadId);
-    toast({ title: "Sent to Outbound", description: `${focusedSignal?.company ?? 'Company'} added to ${target.laneSpec.name} lane.` });
-    logActivity({ type: 'Outbound', description: `Added ${focusedSignal?.company} to ${target.laneSpec.name} lane` });
+  const handleDeployPack = (packId: string) => {
+    const pack = responsePacks.find((rp) => rp.id === packId);
+    if (!pack) return;
+    approveResponsePack(packId);
+    toast({
+      title: "Response Pack Deployed",
+      description: `${pack.leadsAffected} leads routed to ${pack.targetLane}.`,
+    });
   };
 
   const statItems = [
-    { label: "Signals Today", value: 124, trend: 15 },
-    { label: "High Impact", value: 12, trend: 2 },
-    { label: "Routed Automatically", value: 85, trend: 10 },
-    { label: "Signal-to-Noise", value: "94%" }
+    { label: "Active Signals", value: 124, trend: 15 },
+    { label: "High-Priority Threats", value: 12, trend: 2 },
+    { label: "Opportunities Detected", value: 9, trend: 4 },
+    { label: "Strategies Generated", value: pendingPacks.length + 2 },
   ];
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+      {/* Command Bar */}
+      <div className="flex items-center justify-between px-6 py-3 border-b border-border shrink-0">
         <div>
-          <h1 className="text-xl font-semibold">Signal Engine</h1>
-          <p className="text-sm text-muted-foreground">Scout network and market intelligence</p>
+          <h1 className="text-xl font-semibold">Strategic Command</h1>
+          <p className="text-sm text-muted-foreground">
+            Market intelligence and strategic response
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex bg-secondary/50 rounded-md border border-border/50 overflow-hidden text-xs font-medium">
+            {(["Monitor", "Recommend", "Deploy"] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => setStrategyMode(m)}
+                className={`px-3 py-1.5 transition-colors ${strategyMode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+          <div className="flex bg-secondary/50 rounded-md border border-border/50 overflow-hidden text-xs font-medium">
+            {(["24h", "7d", "30d"] as const).map((w) => (
+              <button
+                key={w}
+                onClick={() => setTimeWindow(w)}
+                className={`px-3 py-1.5 transition-colors ${timeWindow === w ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                {w}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
-      
+
       <StatStrip items={statItems} />
 
       <div className="flex flex-1 min-h-0 overflow-hidden">
-        {/* Left Rail */}
+        {/* Left Rail — Intelligence Streams */}
         <div className="w-64 flex-shrink-0 border-r border-border bg-card/30 p-4 overflow-y-auto">
-          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">Signal Types</h3>
-          <div className="space-y-1">
-            {[
-              { label: 'All Signals', count: 124 },
-              { label: 'Leadership Changes', count: 18 },
-              { label: 'Competitor Pricing', count: 9 },
-              { label: 'Funding Events', count: 14 },
-              { label: 'Hiring Surges', count: 22 },
-              { label: 'Tech Stack Changes', count: 11 },
-            ].map(type => (
-              <button key={type.label} className="w-full text-left px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary transition-colors flex justify-between items-center group">
-                <span className="text-foreground/80 group-hover:text-foreground">{type.label}</span>
-                <span className="text-xs text-muted-foreground">{type.count}</span>
+          <div className="mb-4">
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+              Saved Views
+            </h3>
+            <div className="space-y-1">
+              {SAVED_VIEWS.map((v) => (
+                <button
+                  key={v}
+                  className="w-full text-left px-2 py-1.5 rounded text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+            Intelligence Streams
+          </h3>
+          <div className="space-y-0.5">
+            {INTEL_STREAMS.map((stream) => (
+              <button
+                key={stream.label}
+                onClick={() => setActiveStream(stream.label)}
+                className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex justify-between items-center ${activeStream === stream.label ? "bg-primary/10 text-primary" : "text-foreground/70 hover:bg-secondary hover:text-foreground"}`}
+              >
+                <span className="flex items-center gap-2">
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${stream.severity === "high" ? "bg-amber-400" : stream.severity === "medium" ? "bg-primary" : "bg-muted-foreground"}`}
+                  />
+                  {stream.label}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {stream.count}
+                </span>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Main Centre */}
-        <div className="flex-1 overflow-auto bg-background/50 p-6">
-          <div className="rounded-xl border border-border bg-card overflow-hidden">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-secondary/50 border-b border-border text-muted-foreground uppercase tracking-wider text-[10px] font-semibold">
-                <tr>
-                  <th className="px-4 py-3">Time</th>
-                  <th className="px-4 py-3">Company</th>
-                  <th className="px-4 py-3">Signal Type</th>
-                  <th className="px-4 py-3">Description</th>
-                  <th className="px-4 py-3">Impact</th>
-                  <th className="px-4 py-3"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/50">
-                {signals.map(signal => (
-                  <tr 
-                    key={signal.id} 
-                    onClick={() => setFocusedSignalId(signal.id)}
-                    className={`hover:bg-secondary/30 cursor-pointer transition-colors ${focusedSignalId === signal.id ? 'bg-primary/5' : ''}`}
-                  >
-                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{signal.timestamp}</td>
-                    <td className="px-4 py-3 font-medium">{signal.company}</td>
-                    <td className="px-4 py-3">
-                      <span className="px-2 py-0.5 rounded bg-secondary text-xs">{signal.type}</span>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground truncate max-w-[200px]">{signal.description}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded text-xs ${signal.impact === 'High' ? 'bg-amber-500/10 text-amber-500' : 'bg-secondary text-muted-foreground'}`}>
-                        {signal.impact}
+        {/* Main Centre — Strategic Field */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-background/50">
+          {/* Competitor Cards */}
+          <section>
+            <div className="flex items-center gap-2 mb-4">
+              <Target className="w-4 h-4 text-muted-foreground" />
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                Competitor Movement
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {COMPETITOR_CARDS.map((card) => (
+                <div
+                  key={card.id}
+                  onClick={() => setFocusedCompetitorId(card.id)}
+                  className={`p-4 rounded-xl border cursor-pointer transition-all ${focusedCompetitorId === card.id ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/30"}`}
+                >
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="font-semibold text-sm text-foreground">
+                      {card.name}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {directionIcon(card.direction)}
+                      <span
+                        className={`text-xs px-1.5 py-0.5 rounded border ${impactBadge(card.impact)}`}
+                      >
+                        {card.impact}
                       </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setFocusedSignalId(signal.id); setDrawerOpen(true); }}>
-                        Why Now <ArrowUpRight className="w-3 h-3 ml-1" />
-                      </Button>
-                    </td>
+                    </div>
+                  </div>
+                  <div className="text-xs text-muted-foreground leading-relaxed">
+                    {card.move}
+                  </div>
+                  <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {card.timestamp}
+                    </span>
+                    <span>{card.affectedLeads} leads affected</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Live Signal Feed */}
+          <section>
+            <div className="flex items-center gap-2 mb-4">
+              <Radio className="w-4 h-4 text-muted-foreground" />
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                Live Signal Feed
+              </h2>
+            </div>
+            <div className="rounded-xl border border-border bg-card overflow-hidden">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-secondary/50 border-b border-border text-muted-foreground uppercase tracking-wider text-[10px] font-semibold">
+                  <tr>
+                    <th className="px-4 py-3">Time</th>
+                    <th className="px-4 py-3">Type</th>
+                    <th className="px-4 py-3">Source</th>
+                    <th className="px-4 py-3">Signal</th>
+                    <th className="px-4 py-3">Direction</th>
+                    <th className="px-4 py-3">Impact</th>
                   </tr>
+                </thead>
+                <tbody className="divide-y divide-border/50">
+                  {MARKET_SIGNALS.map((sig) => (
+                    <tr
+                      key={sig.id}
+                      onClick={() =>
+                        setFocusedSignalId(
+                          focusedSignalId === sig.id ? null : sig.id,
+                        )
+                      }
+                      className={`cursor-pointer transition-colors hover:bg-secondary/30 ${focusedSignalId === sig.id ? "bg-primary/5" : ""}`}
+                    >
+                      <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                        {sig.timestamp}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="text-xs px-2 py-0.5 rounded bg-secondary text-muted-foreground">
+                          {sig.type}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-sm font-medium">
+                        {sig.source}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground max-w-sm">
+                        {sig.event}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1">
+                          {directionIcon(sig.direction)}
+                          <span
+                            className={`text-xs ${sig.direction === "opportunity" ? "text-green-400" : "text-red-400"}`}
+                          >
+                            {sig.direction === "opportunity"
+                              ? "Opportunity"
+                              : "Threat"}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded border ${impactBadge(sig.impact)}`}
+                        >
+                          {sig.impact}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* Response Packs */}
+          <section>
+            <div className="flex items-center gap-2 mb-4">
+              <Zap className="w-4 h-4 text-muted-foreground" />
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                Response Packs
+              </h2>
+              <Badge
+                variant="outline"
+                className="ml-auto text-xs text-amber-400 border-amber-500/30 bg-amber-500/10"
+              >
+                {pendingPacks.length} awaiting approval
+              </Badge>
+            </div>
+            <div className="space-y-3">
+              <AnimatePresence>
+                {pendingPacks.map((pack) => (
+                  <motion.div
+                    key={pack.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="p-5 rounded-xl border border-border bg-card hover:border-primary/30 transition-all"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <div className="font-semibold text-foreground mb-1">
+                          {pack.title}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {pack.description}
+                        </div>
+                        <div className="flex items-center gap-3 mt-3 text-xs">
+                          <span className="flex items-center gap-1 text-muted-foreground">
+                            <Target className="w-3 h-3" /> {pack.leadsAffected}{" "}
+                            leads affected
+                          </span>
+                          <span className="flex items-center gap-1 text-primary">
+                            <ArrowRight className="w-3 h-3" /> {pack.targetLane}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2 shrink-0">
+                        <Button
+                          size="sm"
+                          onClick={() => handleDeployPack(pack.id)}
+                          className="gap-1.5"
+                        >
+                          <Play className="w-3.5 h-3.5 fill-current" /> Deploy
+                          to Outbound
+                        </Button>
+                        <Button size="sm" variant="outline">
+                          Modify
+                        </Button>
+                      </div>
+                    </div>
+                  </motion.div>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </AnimatePresence>
+              {pendingPacks.length === 0 && (
+                <div className="p-8 text-center border border-border border-dashed rounded-xl text-muted-foreground text-sm">
+                  <CheckCircle2 className="w-8 h-8 text-green-500 mx-auto mb-2" />
+                  All response packs have been deployed.
+                </div>
+              )}
+            </div>
+          </section>
         </div>
 
-        {/* Right Panel */}
-        {focusedSignal && (
-          <RightPanel title="Intelligence Snapshot">
-            <div className="mb-6 pb-6 border-b border-border/50">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-12 h-12 rounded bg-secondary flex items-center justify-center border border-border">
-                  <Building2 className="w-6 h-6 text-muted-foreground" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-semibold text-foreground leading-tight">{focusedSignal.company}</h2>
-                  <a href="#" className="text-xs text-primary hover:underline flex items-center gap-1 mt-1">
-                    View Website <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            <PanelSection title="Decision Maker Readiness">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full border-4 border-primary flex items-center justify-center text-xl font-bold text-foreground">
-                  84
-                </div>
-                <div className="flex-1 space-y-2 text-sm text-muted-foreground">
-                  <div className="flex justify-between items-center">
-                    <span>Intent</span>
-                    <span className="font-medium text-foreground">High</span>
+        {/* Right Panel — Strategic Intelligence Engine */}
+        <RightPanel title="Strategic Intelligence">
+          {focusedCompetitor ? (
+            <>
+              <PanelSection title="Situation Summary">
+                <div className="p-3 rounded-lg bg-secondary/30 border border-border text-sm text-muted-foreground leading-relaxed">
+                  <div className="font-medium text-foreground mb-1 flex items-center gap-2">
+                    <Building2 className="w-3.5 h-3.5 text-primary" />
+                    {focusedCompetitor.name}
+                    <span
+                      className={`text-xs px-1.5 py-0.5 rounded border ml-auto ${impactBadge(focusedCompetitor.impact)}`}
+                    >
+                      {focusedCompetitor.impact}
+                    </span>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span>Authority</span>
-                    <span className="font-medium text-foreground">Verified</span>
+                  {focusedCompetitor.summary}
+                </div>
+              </PanelSection>
+
+              <PanelSection title="Why It Matters">
+                <div className="text-sm text-muted-foreground leading-relaxed space-y-2">
+                  <p>
+                    {focusedCompetitor.direction === "opportunity"
+                      ? `${focusedCompetitor.name}'s move creates a short-term switching window. Workshops are price-sensitive — a 15% hike triggers vendor re-evaluation immediately.`
+                      : `${focusedCompetitor.name} is expanding into your target segment. Two of your active prospects may now receive competing offers.`}
+                  </p>
+                  <div className="flex items-center gap-2 text-xs text-primary font-medium mt-2">
+                    {directionIcon(focusedCompetitor.direction)}
+                    {focusedCompetitor.affectedLeads} leads in your pipeline
+                    directly affected
                   </div>
                 </div>
-              </div>
-            </PanelSection>
+              </PanelSection>
 
-            <PanelSection title="ICP Match">
-              {(() => {
-                const icp = [
-                  { label: 'Industry fit', value: 92 },
-                  { label: 'Company size', value: 78 },
-                  { label: 'Tech stack overlap', value: 84 },
-                  { label: 'Geography', value: 96 },
-                ];
-                const overall = Math.round(icp.reduce((a, b) => a + b.value, 0) / icp.length);
-                return (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Overall match</span>
-                      <span className="text-sm font-semibold text-foreground">{overall}/100</span>
-                    </div>
-                    {icp.map(row => (
-                      <div key={row.label}>
-                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                          <span>{row.label}</span>
-                          <span className="text-foreground">{row.value}</span>
-                        </div>
-                        <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
-                          <div className="h-full bg-primary" style={{ width: `${row.value}%` }} />
-                        </div>
+              <PanelSection title="Recommended Strategy">
+                <div className="space-y-2 text-sm">
+                  {focusedCompetitor.direction === "opportunity" ? (
+                    <>
+                      <div className="flex items-start gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-green-500 mt-0.5 shrink-0" />
+                        <span className="text-muted-foreground">
+                          Lead with price-lock guarantee messaging in outbound
+                        </span>
                       </div>
-                    ))}
-                  </div>
-                );
-              })()}
-            </PanelSection>
-
-            <PanelSection title="Authority Score">
-              {(() => {
-                const auth = [
-                  { label: 'Title seniority', value: 88, note: 'CFO, named decision maker' },
-                  { label: 'Budget signal', value: 74, note: 'Quarterly tech budget unconfirmed' },
-                  { label: 'Recent mandate', value: 90, note: 'New CFO hired 14 days ago' },
-                ];
-                const overall = Math.round(auth.reduce((a, b) => a + b.value, 0) / auth.length);
-                return (
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">Composite</span>
-                      <span className="text-sm font-semibold text-foreground">{overall}/100</span>
-                    </div>
-                    {auth.map(row => (
-                      <div key={row.label} className="text-xs">
-                        <div className="flex items-center justify-between text-muted-foreground mb-1">
-                          <span>{row.label}</span>
-                          <span className="text-foreground font-medium">{row.value}</span>
-                        </div>
-                        <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
-                          <div className="h-full bg-primary/80" style={{ width: `${row.value}%` }} />
-                        </div>
-                        <div className="text-muted-foreground/80 mt-1">{row.note}</div>
+                      <div className="flex items-start gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-green-500 mt-0.5 shrink-0" />
+                        <span className="text-muted-foreground">
+                          Reference same-week onboarding to reduce switching
+                          friction
+                        </span>
                       </div>
-                    ))}
+                      <div className="flex items-start gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-green-500 mt-0.5 shrink-0" />
+                        <span className="text-muted-foreground">
+                          Deploy response pack within 2 days — window is 6–8
+                          weeks
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-400 mt-0.5 shrink-0" />
+                        <span className="text-muted-foreground">
+                          Accelerate pipeline velocity on affected leads
+                        </span>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-400 mt-0.5 shrink-0" />
+                        <span className="text-muted-foreground">
+                          Differentiate on integration depth — highlight Xero +
+                          Burson native connectors
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </PanelSection>
+
+              <PanelSection title="Execution Impact">
+                <div className="space-y-2 text-xs">
+                  <div className="p-2 rounded border border-border bg-card flex justify-between">
+                    <span className="text-muted-foreground">
+                      Outbound lane affected
+                    </span>
+                    <span className="font-medium text-primary">
+                      Competitor Switch Targets
+                    </span>
                   </div>
-                );
-              })()}
-            </PanelSection>
-
-            <PanelSection title="Scout Notes">
-              <div className="text-sm text-muted-foreground bg-secondary/30 p-3 rounded-lg border border-border/50">
-                {focusedSignal.description}. This creates an immediate opening for value proposition discussion, specifically around scaling operations without adding headcount.
-              </div>
-            </PanelSection>
-
-            <PanelSection title="Recommended Actions">
-              <div className="space-y-2">
-                <Button onClick={handleRouteToCRM} className="w-full justify-between" variant="outline">
-                  Route to CRM Watch List <ArrowRight className="w-4 h-4" />
-                </Button>
-                <Button onClick={handleSendToOutbound} className="w-full justify-between" variant="default">
-                  Send to Outbound Lane <ArrowRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </PanelSection>
-          </RightPanel>
-        )}
-      </div>
-
-      <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
-        <SheetContent className="sm:max-w-[500px] bg-card border-l border-border p-0 flex flex-col">
-          <SheetHeader className="p-6 border-b border-border/50 bg-secondary/20">
-            <div className="flex items-center gap-2 mb-2">
-              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">Battlecard</Badge>
-              <span className="text-xs text-muted-foreground">{focusedSignal?.type}</span>
-            </div>
-            <SheetTitle className="text-2xl">Why Now: {focusedSignal?.company}</SheetTitle>
-            <SheetDescription>Strategic synthesis of recent market signals.</SheetDescription>
-          </SheetHeader>
-          
-          <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            <div>
-              <h4 className="font-medium text-sm text-foreground mb-3 flex items-center gap-2">
-                <Activity className="w-4 h-4 text-primary" /> The Trigger
-              </h4>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {focusedSignal?.description}. Historical data indicates companies undergoing this transition have a 4x higher propensity to evaluate new operational software within 30 days.
+                  <div className="p-2 rounded border border-border bg-card flex justify-between">
+                    <span className="text-muted-foreground">
+                      Leads to re-sequence
+                    </span>
+                    <span className="font-medium">
+                      {focusedCompetitor.affectedLeads}
+                    </span>
+                  </div>
+                  <div className="p-2 rounded border border-border bg-card flex justify-between">
+                    <span className="text-muted-foreground">
+                      Response pack status
+                    </span>
+                    <span
+                      className={`font-medium ${pendingPacks.length > 0 ? "text-amber-400" : "text-green-400"}`}
+                    >
+                      {pendingPacks.length > 0 ? "Ready to deploy" : "Deployed"}
+                    </span>
+                  </div>
+                </div>
+                <ConfidenceScore score={89} label="Strategy Confidence" />
+              </PanelSection>
+            </>
+          ) : (
+            <PanelSection title="Select a signal">
+              <p className="text-sm text-muted-foreground">
+                Click a competitor card or signal row to see strategic analysis.
               </p>
-            </div>
-            
-            <div>
-              <h4 className="font-medium text-sm text-foreground mb-3 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-green-500" /> Strategic Approach
-              </h4>
-              <ul className="space-y-3 text-sm">
-                <li className="flex items-start gap-2 bg-secondary/30 p-3 rounded border border-border/50">
-                  <span className="font-medium text-foreground min-w-[60px]">Angle 1:</span>
-                  <span className="text-muted-foreground">Acknowledge the change and frame our solution as a de-risking mechanism.</span>
-                </li>
-                <li className="flex items-start gap-2 bg-secondary/30 p-3 rounded border border-border/50">
-                  <span className="font-medium text-foreground min-w-[60px]">Angle 2:</span>
-                  <span className="text-muted-foreground">Highlight how similar companies navigated this phase using automated workflows.</span>
-                </li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-medium text-sm text-foreground mb-3">Objection Handling</h4>
-              <div className="space-y-2">
-                <div className="p-3 rounded border border-border">
-                  <div className="text-xs font-medium text-amber-500 mb-1">"We have too much change right now"</div>
-                  <div className="text-sm text-muted-foreground">"Understood. We deploy invisibly alongside your current tools to handle the transition load without adding new training requirements."</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="p-6 border-t border-border/50 bg-background flex gap-3">
-            <Button className="flex-1" onClick={() => { handleSendToOutbound(); setDrawerOpen(false); }}>Deploy to Outbound</Button>
-            <Button variant="outline" onClick={() => setDrawerOpen(false)}>Close</Button>
-          </div>
-        </SheetContent>
-      </Sheet>
+            </PanelSection>
+          )}
+        </RightPanel>
+      </div>
     </div>
   );
 }

@@ -1,24 +1,55 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
-export type LeadStage = 'New' | 'Ready' | 'Contacted' | 'Qualified' | 'Meeting Booked' | 'Opportunity' | 'Won / Lost';
-export type AutonomyMode = 'Manual Only' | 'Review Each Lane' | 'Execute Pre-Approved' | 'Autonomous Within Policy';
-export type ViewMode = 'Simple' | 'Detailed';
+export type LeadStage =
+  | "New"
+  | "Ready"
+  | "Contacted"
+  | "Qualified"
+  | "Meeting Booked"
+  | "Opportunity"
+  | "Won / Lost";
+export type AutonomyMode =
+  | "Manual Only"
+  | "Review Each Lane"
+  | "Execute Pre-Approved"
+  | "Autonomous Within Policy";
+export type ViewMode = "Simple" | "Detailed";
+
+export interface DISCProfile {
+  primaryType: "D" | "I" | "S" | "C";
+  secondaryType?: "D" | "I" | "S" | "C";
+  blend: string;
+  dScore: number;
+  iScore: number;
+  sScore: number;
+  cScore: number;
+  confidence: number;
+  culturalNotes?: string;
+}
 
 export interface Lead {
   id: string;
   company: string;
   contact: string;
+  /** Alias for contact — used by unit tests (GAP-32) */
+  name: string;
   role: string;
   score: number;
+  /** Alias for score — used by unit tests */
+  leadScore: number;
   engagement: number;
   intent: number;
   stage: LeadStage;
   lastContact: string;
   nextAction: string;
   owner: string;
-  discPrimary: string;
-  discSecondary: string;
+  disc: DISCProfile;
   persona: string;
+  whySurfaced: string;
+  laneLogic: string;
+  currentTools: string[];
+  keyPainPoints: string[];
+  recommendedOpener: string;
   ghostIntel?: {
     tools: string[];
     switchingSignals: string[];
@@ -35,9 +66,9 @@ export interface PreparedAction {
   id: string;
   title: string;
   source: string;
-  impact: 'high' | 'medium' | 'low';
+  impact: "high" | "medium" | "low";
   confidence: number;
-  status: 'pending' | 'approved' | 'skipped';
+  status: "pending" | "approved" | "skipped";
 }
 
 export interface OutboundLane {
@@ -48,16 +79,21 @@ export interface OutboundLane {
   bookingRate: number;
   valueAud: number;
   strategy: string;
-  state: 'Pre-Approved' | 'Review Required' | 'Blocked' | 'Active';
+  state: "Pre-Approved" | "Review Required" | "Blocked" | "Active";
 }
 
 export interface CallConsoleState {
-  status: 'idle' | 'dialing' | 'connected' | 'completed';
+  status: "idle" | "dialing" | "connected" | "completed";
+  /** Derived convenience bool — true when status is dialing or connected */
+  active: boolean;
   leadId: string | null;
+  /** Server-issued call ID — present after api-server acknowledges the call */
+  callId: string | null;
   transcript: string[];
   vibeScore: number;
-  sentiment: 'positive' | 'neutral' | 'negative';
+  sentiment: "positive" | "neutral" | "negative";
   objections: string[];
+  disposition: string | null;
 }
 
 export interface ActivityEntry {
@@ -72,7 +108,7 @@ export interface Signal {
   type: string;
   company: string;
   description: string;
-  impact: 'High' | 'Medium' | 'Low';
+  impact: "High" | "Medium" | "Low";
   timestamp: string;
 }
 
@@ -82,7 +118,7 @@ export interface ResponsePack {
   description: string;
   targetLane: string;
   leadsAffected: number;
-  status: 'pending' | 'approved' | 'modified';
+  status: "pending" | "approved" | "modified";
 }
 
 export interface AppState {
@@ -90,7 +126,7 @@ export interface AppState {
   setAutonomyMode: (mode: AutonomyMode) => void;
   viewMode: ViewMode;
   setViewMode: (mode: ViewMode) => void;
-  
+
   leads: Lead[];
   setLeads: (leads: Lead[]) => void;
   updateLeadStage: (id: string, stage: LeadStage) => void;
@@ -114,12 +150,17 @@ export interface AppState {
   updateLane: (id: string, updates: Partial<OutboundLane>) => void;
 
   recentActivity: ActivityEntry[];
-  logActivity: (activity: Omit<ActivityEntry, 'id' | 'timestamp'>) => void;
+  logActivity: (activity: Omit<ActivityEntry, "id" | "timestamp">) => void;
 
   callConsole: CallConsoleState;
   startCall: (leadId: string) => void;
   appendTranscript: (text: string) => void;
-  completeCall: (vibeScore: number, sentiment: 'positive'|'neutral'|'negative', objections: string[]) => void;
+  completeCall: (
+    vibeScore: number,
+    sentiment: "positive" | "neutral" | "negative",
+    objections: string[],
+  ) => void;
+  setDisposition: (disposition: string) => void;
   resetCall: () => void;
 
   signals: Signal[];
@@ -128,38 +169,45 @@ export interface AppState {
 }
 
 export const useAppStore = create<AppState>((set) => ({
-  autonomyMode: 'Review Each Lane',
+  autonomyMode: "Review Each Lane",
   setAutonomyMode: (mode) => set({ autonomyMode: mode }),
-  viewMode: 'Detailed',
+  viewMode: "Simple",
   setViewMode: (mode) => set({ viewMode: mode }),
-  
+
   leads: [],
   setLeads: (leads) => set({ leads }),
-  updateLeadStage: (id, stage) => set((state) => ({
-    leads: state.leads.map(l => l.id === id ? { ...l, stage } : l)
-  })),
+  updateLeadStage: (id, stage) =>
+    set((state) => ({
+      leads: state.leads.map((l) => (l.id === id ? { ...l, stage } : l)),
+    })),
 
   preparedActions: [],
-  approveAction: (id) => set((state) => {
-    const actions = state.preparedActions.map(a => a.id === id ? { ...a, status: 'approved' as const } : a);
-    return {
-      preparedActions: actions,
-      stats: {
-        ...state.stats,
-        actionsReady: actions.filter(a => a.status === 'pending').length
-      }
-    };
-  }),
-  skipAction: (id) => set((state) => {
-    const actions = state.preparedActions.map(a => a.id === id ? { ...a, status: 'skipped' as const } : a);
-    return {
-      preparedActions: actions,
-      stats: {
-        ...state.stats,
-        actionsReady: actions.filter(a => a.status === 'pending').length
-      }
-    };
-  }),
+  approveAction: (id) =>
+    set((state) => {
+      const actions = state.preparedActions.map((a) =>
+        a.id === id ? { ...a, status: "approved" as const } : a,
+      );
+      return {
+        preparedActions: actions,
+        stats: {
+          ...state.stats,
+          actionsReady: actions.filter((a) => a.status === "pending").length,
+        },
+      };
+    }),
+  skipAction: (id) =>
+    set((state) => {
+      const actions = state.preparedActions.map((a) =>
+        a.id === id ? { ...a, status: "skipped" as const } : a,
+      );
+      return {
+        preparedActions: actions,
+        stats: {
+          ...state.stats,
+          actionsReady: actions.filter((a) => a.status === "pending").length,
+        },
+      };
+    }),
 
   stats: {
     actionsReady: 0,
@@ -169,167 +217,225 @@ export const useAppStore = create<AppState>((set) => ({
     callsCompleted: 47,
     pipelineValueAud: 1_245_000,
   },
-  incrementMeetingsBooked: () => set((state) => ({
-    stats: { ...state.stats, meetingsBooked: state.stats.meetingsBooked + 1 }
-  })),
+  incrementMeetingsBooked: () =>
+    set((state) => ({
+      stats: { ...state.stats, meetingsBooked: state.stats.meetingsBooked + 1 },
+    })),
 
   outboundLanes: [],
-  addLeadToLane: (laneId, leadId) => set((state) => ({
-    outboundLanes: state.outboundLanes.map(lane => {
-      if (lane.id !== laneId) return lane;
-      if (lane.leadIds.includes(leadId)) return lane;
-      const nextIds = [...lane.leadIds, leadId];
-      return { ...lane, leadIds: nextIds, count: nextIds.length };
-    })
-  })),
-  updateLane: (id, updates) => set((state) => ({
-    outboundLanes: state.outboundLanes.map(lane =>
-      lane.id === id ? { ...lane, ...updates } : lane
-    )
-  })),
+  addLeadToLane: (laneId, leadId) =>
+    set((state) => ({
+      outboundLanes: state.outboundLanes.map((lane) => {
+        if (lane.id !== laneId) return lane;
+        if (lane.leadIds.includes(leadId)) return lane;
+        const nextIds = [...lane.leadIds, leadId];
+        return { ...lane, leadIds: nextIds, count: nextIds.length };
+      }),
+    })),
+  updateLane: (id, updates) =>
+    set((state) => ({
+      outboundLanes: state.outboundLanes.map((lane) =>
+        lane.id === id ? { ...lane, ...updates } : lane,
+      ),
+    })),
 
   recentActivity: [],
-  logActivity: (activity) => set((state) => ({
-    recentActivity: [
-      {
-        ...activity,
-        id: Math.random().toString(36).substring(7),
-        timestamp: new Date().toISOString()
-      },
-      ...state.recentActivity
-    ].slice(0, 50)
-  })),
+  logActivity: (activity) =>
+    set((state) => ({
+      recentActivity: [
+        {
+          ...activity,
+          id: Math.random().toString(36).substring(7),
+          timestamp: new Date().toISOString(),
+        },
+        ...state.recentActivity,
+      ].slice(0, 50),
+    })),
 
   callConsole: {
-    status: 'idle',
+    status: "idle",
+    active: false,
     leadId: null,
+    callId: null,
     transcript: [],
     vibeScore: 0,
-    sentiment: 'neutral',
-    objections: []
+    sentiment: "neutral",
+    objections: [],
+    disposition: null,
   },
-  startCall: (leadId) => set({
-    callConsole: {
-      status: 'dialing',
-      leadId,
-      transcript: [],
-      vibeScore: 50,
-      sentiment: 'neutral',
-      objections: []
-    }
-  }),
-  appendTranscript: (text) => set((state) => ({
-    callConsole: {
-      ...state.callConsole,
-      transcript: [...state.callConsole.transcript, text]
-    }
-  })),
-  completeCall: (vibeScore, sentiment, objections) => set((state) => {
-    const leadId = state.callConsole.leadId;
-    const lead = state.leads.find(l => l.id === leadId);
-    const bookedMeeting = sentiment === 'positive' && vibeScore >= 70;
-    const createdOpportunity = bookedMeeting && vibeScore >= 80;
-    const dealValue = createdOpportunity ? 25_000 + Math.round(vibeScore * 250) : 0;
-
-    const nextLeads = leadId
-      ? state.leads.map(l => {
-          if (l.id !== leadId) return l;
-          const nextStage: LeadStage = createdOpportunity
-            ? 'Opportunity'
-            : bookedMeeting
-              ? 'Meeting Booked'
-              : 'Contacted';
-          return { ...l, stage: nextStage, lastContact: 'Just now' };
-        })
-      : state.leads;
-
-    const activityEntry: ActivityEntry = {
-      id: Math.random().toString(36).substring(7),
-      timestamp: new Date().toISOString(),
-      type: 'call.completed',
-      description: lead
-        ? `Call completed with ${lead.contact} at ${lead.company} — vibe ${vibeScore}, ${sentiment}`
-        : `Call completed — vibe ${vibeScore}, ${sentiment}`,
-    };
-
-    return {
+  startCall: (leadId) => {
+    // Optimistically set to dialing so the UI responds immediately
+    set({
+      callConsole: {
+        status: "dialing",
+        active: true,
+        leadId,
+        callId: null,
+        transcript: [],
+        vibeScore: 50,
+        sentiment: "neutral",
+        objections: [],
+        disposition: null,
+      },
+    });
+    // Fire-and-forget to api-server — store callId when resolved
+    fetch("/api/calls/outbound", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ leadId }),
+    })
+      .then((res) => {
+        if (!res.ok) return;
+        return res.json();
+      })
+      .then((data: { callId?: string } | undefined) => {
+        if (!data?.callId) return;
+        set((state) => ({
+          callConsole: { ...state.callConsole, callId: data.callId ?? null },
+        }));
+      })
+      .catch(() => {
+        // api-server unreachable — demo continues in simulation mode
+      });
+  },
+  appendTranscript: (text) =>
+    set((state) => ({
       callConsole: {
         ...state.callConsole,
-        status: 'completed',
-        vibeScore,
-        sentiment,
-        objections,
+        transcript: [...state.callConsole.transcript, text],
       },
-      leads: nextLeads,
-      stats: {
-        ...state.stats,
-        callsCompleted: state.stats.callsCompleted + 1,
-        meetingsBooked: state.stats.meetingsBooked + (bookedMeeting ? 1 : 0),
-        opportunitiesCreated: state.stats.opportunitiesCreated + (createdOpportunity ? 1 : 0),
-        pipelineValueAud: state.stats.pipelineValueAud + dealValue,
+    })),
+  completeCall: (vibeScore, sentiment, objections) =>
+    set((state) => {
+      const leadId = state.callConsole.leadId;
+      const lead = state.leads.find((l) => l.id === leadId);
+      const bookedMeeting = sentiment === "positive" && vibeScore >= 70;
+      const createdOpportunity = bookedMeeting && vibeScore >= 80;
+      const dealValue = createdOpportunity
+        ? 25_000 + Math.round(vibeScore * 250)
+        : 0;
+
+      const nextLeads = leadId
+        ? state.leads.map((l) => {
+            if (l.id !== leadId) return l;
+            const nextStage: LeadStage = createdOpportunity
+              ? "Opportunity"
+              : bookedMeeting
+                ? "Meeting Booked"
+                : "Contacted";
+            return { ...l, stage: nextStage, lastContact: "Just now" };
+          })
+        : state.leads;
+
+      const activityEntry: ActivityEntry = {
+        id: Math.random().toString(36).substring(7),
+        timestamp: new Date().toISOString(),
+        type: "call.completed",
+        description: lead
+          ? `Call completed with ${lead.contact} at ${lead.company} — vibe ${vibeScore}, ${sentiment}`
+          : `Call completed — vibe ${vibeScore}, ${sentiment}`,
+      };
+
+      return {
+        callConsole: {
+          ...state.callConsole,
+          status: "completed",
+          active: false,
+          vibeScore,
+          sentiment,
+          objections,
+        },
+        leads: nextLeads,
+        stats: {
+          ...state.stats,
+          callsCompleted: state.stats.callsCompleted + 1,
+          meetingsBooked: state.stats.meetingsBooked + (bookedMeeting ? 1 : 0),
+          opportunitiesCreated:
+            state.stats.opportunitiesCreated + (createdOpportunity ? 1 : 0),
+          pipelineValueAud: state.stats.pipelineValueAud + dealValue,
+        },
+        recentActivity: [activityEntry, ...state.recentActivity].slice(0, 50),
+      };
+    }),
+  setDisposition: (disposition) =>
+    set((state) => ({
+      callConsole: { ...state.callConsole, disposition },
+    })),
+  resetCall: () =>
+    set({
+      callConsole: {
+        status: "idle",
+        active: false,
+        leadId: null,
+        callId: null,
+        transcript: [],
+        vibeScore: 0,
+        sentiment: "neutral",
+        objections: [],
+        disposition: null,
       },
-      recentActivity: [activityEntry, ...state.recentActivity].slice(0, 50),
-    };
-  }),
-  resetCall: () => set({
-    callConsole: { status: 'idle', leadId: null, transcript: [], vibeScore: 0, sentiment: 'neutral', objections: [] }
-  }),
+    }),
 
   signals: [],
   responsePacks: [],
-  approveResponsePack: (id) => set((state) => {
-    const pack = state.responsePacks.find(rp => rp.id === id);
-    if (!pack) return {};
+  approveResponsePack: (id) =>
+    set((state) => {
+      const pack = state.responsePacks.find((rp) => rp.id === id);
+      if (!pack) return {};
 
-    const targetLane = state.outboundLanes.find(
-      l => l.id === pack.targetLane || l.name === pack.targetLane
-    );
-
-    let nextLanes = state.outboundLanes;
-    if (targetLane) {
-      const eligible = state.leads
-        .filter(l => !targetLane.leadIds.includes(l.id))
-        .slice(0, pack.leadsAffected)
-        .map(l => l.id);
-      const merged = Array.from(new Set([...targetLane.leadIds, ...eligible]));
-      nextLanes = state.outboundLanes.map(lane =>
-        lane.id === targetLane.id
-          ? {
-              ...lane,
-              leadIds: merged,
-              count: merged.length,
-              state: lane.state === 'Blocked' ? 'Review Required' : 'Active',
-            }
-          : lane
+      const targetLane = state.outboundLanes.find(
+        (l) => l.id === pack.targetLane || l.name === pack.targetLane,
       );
-    } else {
-      const eligibleIds = state.leads.slice(0, pack.leadsAffected).map(l => l.id);
-      const newLane: OutboundLane = {
-        id: `lane-${Math.random().toString(36).substring(2, 8)}`,
-        name: pack.targetLane,
-        leadIds: eligibleIds,
-        count: eligibleIds.length,
-        bookingRate: 18,
-        valueAud: eligibleIds.length * 12_500,
-        strategy: pack.title,
-        state: 'Review Required',
+
+      let nextLanes = state.outboundLanes;
+      if (targetLane) {
+        const eligible = state.leads
+          .filter((l) => !targetLane.leadIds.includes(l.id))
+          .slice(0, pack.leadsAffected)
+          .map((l) => l.id);
+        const merged = Array.from(
+          new Set([...targetLane.leadIds, ...eligible]),
+        );
+        nextLanes = state.outboundLanes.map((lane) =>
+          lane.id === targetLane.id
+            ? {
+                ...lane,
+                leadIds: merged,
+                count: merged.length,
+                state: lane.state === "Blocked" ? "Review Required" : "Active",
+              }
+            : lane,
+        );
+      } else {
+        const eligibleIds = state.leads
+          .slice(0, pack.leadsAffected)
+          .map((l) => l.id);
+        const newLane: OutboundLane = {
+          id: `lane-${Math.random().toString(36).substring(2, 8)}`,
+          name: pack.targetLane,
+          leadIds: eligibleIds,
+          count: eligibleIds.length,
+          bookingRate: 18,
+          valueAud: eligibleIds.length * 12_500,
+          strategy: pack.title,
+          state: "Review Required",
+        };
+        nextLanes = [...state.outboundLanes, newLane];
+      }
+
+      const activityEntry: ActivityEntry = {
+        id: Math.random().toString(36).substring(7),
+        timestamp: new Date().toISOString(),
+        type: "response_pack.approved",
+        description: `Approved "${pack.title}" — ${pack.leadsAffected} leads added to ${pack.targetLane}`,
       };
-      nextLanes = [...state.outboundLanes, newLane];
-    }
 
-    const activityEntry: ActivityEntry = {
-      id: Math.random().toString(36).substring(7),
-      timestamp: new Date().toISOString(),
-      type: 'response_pack.approved',
-      description: `Approved "${pack.title}" — ${pack.leadsAffected} leads added to ${pack.targetLane}`,
-    };
-
-    return {
-      responsePacks: state.responsePacks.map(rp =>
-        rp.id === id ? { ...rp, status: 'approved' as const } : rp
-      ),
-      outboundLanes: nextLanes,
-      recentActivity: [activityEntry, ...state.recentActivity].slice(0, 50),
-    };
-  })
+      return {
+        responsePacks: state.responsePacks.map((rp) =>
+          rp.id === id ? { ...rp, status: "approved" as const } : rp,
+        ),
+        outboundLanes: nextLanes,
+        recentActivity: [activityEntry, ...state.recentActivity].slice(0, 50),
+      };
+    }),
 }));

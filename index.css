@@ -57,16 +57,17 @@
   /* Enforce dark mode as default/only mode */
   --background: 222 30% 7%;
   --foreground: 210 20% 96%;
-  
+
   --card: 222 25% 10%;
   --card-foreground: 210 20% 96%;
   --card-border: 222 20% 18%;
+  --card-elevated: 222 22% 13%;
 
   --popover: 222 25% 10%;
   --popover-foreground: 210 20% 96%;
   --popover-border: 222 20% 18%;
 
-  --primary: 210 90% 60%;
+  --primary: 210 55% 52%;
   --primary-foreground: 0 0% 100%;
 
   --secondary: 222 20% 18%;
@@ -75,7 +76,7 @@
   --muted: 222 20% 15%;
   --muted-foreground: 215 15% 65%;
 
-  --accent: 210 90% 60%;
+  --accent: 210 55% 52%;
   --accent-foreground: 0 0% 100%;
 
   --destructive: 350 40% 50%;
@@ -83,16 +84,16 @@
 
   --border: 222 20% 18%;
   --input: 222 20% 18%;
-  --ring: 210 90% 60%;
+  --ring: 210 55% 52%;
 
   --sidebar: 222 30% 7%;
   --sidebar-foreground: 210 20% 96%;
   --sidebar-border: 222 20% 18%;
-  --sidebar-primary: 210 90% 60%;
+  --sidebar-primary: 210 55% 52%;
   --sidebar-primary-foreground: 0 0% 100%;
   --sidebar-accent: 222 20% 18%;
   --sidebar-accent-foreground: 210 20% 96%;
-  --sidebar-ring: 210 90% 60%;
+  --sidebar-ring: 210 55% 52%;
 
   --app-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --app-font-serif: Georgia, serif;
@@ -106,16 +107,17 @@
   /* Same as root */
   --background: 222 30% 7%;
   --foreground: 210 20% 96%;
-  
+
   --card: 222 25% 10%;
   --card-foreground: 210 20% 96%;
   --card-border: 222 20% 18%;
+  --card-elevated: 222 22% 13%;
 
   --popover: 222 25% 10%;
   --popover-foreground: 210 20% 96%;
   --popover-border: 222 20% 18%;
 
-  --primary: 210 90% 60%;
+  --primary: 210 55% 52%;
   --primary-foreground: 0 0% 100%;
 
   --secondary: 222 20% 18%;
@@ -124,7 +126,7 @@
   --muted: 222 20% 15%;
   --muted-foreground: 215 15% 65%;
 
-  --accent: 210 90% 60%;
+  --accent: 210 55% 52%;
   --accent-foreground: 0 0% 100%;
 
   --destructive: 350 40% 50%;
@@ -132,7 +134,7 @@
 
   --border: 222 20% 18%;
   --input: 222 20% 18%;
-  --ring: 210 90% 60%;
+  --ring: 210 55% 52%;
 }
 
 @layer base {

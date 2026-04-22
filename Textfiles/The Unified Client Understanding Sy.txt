@@ -1,0 +1,939 @@
+The Unified Client Understanding System — VICKI + Concierge Deep Dive
+Analysis Date: April 22, 2026
+Purpose: Explain how Ironbark creates a single, coherent "understanding" of the client across all touchpoints through VICKI, Concierge, and the Memory Layer
+Status: Production architecture with Group B enhancements planned
+
+Executive Summary
+The Core Question: "How does the system 'know' me across everything?"
+
+The Answer: Through a three-layer architecture:
+
+VICKI (The Brain) — Strategic reasoning agent that synthesizes intelligence and makes decisions
+The Concierge (The Assistant) — Personal productivity orchestrator that handles calendar, communication, and tasks
+Memory Layer (The Connective Tissue) — Persistent context that flows between all systems so nothing is forgotten
+Key Insight:
+
+VICKI and Concierge are separate but deeply integrated systems. Think of them like the left brain (strategic, analytical, big-picture) and right brain (executive, practical, detail-oriented) of a single mind—they work on different problems but share the same memory and understanding.
+
+The client experiences ONE intelligence that:
+
+Remembers every conversation
+Understands their preferences and values
+Coordinates across all business functions
+Never makes them repeat themselves
+Anticipates needs before they're expressed
+The Two Systems: VICKI vs. Concierge
+VICKI — The Strategic Brain
+Primary Role: Digital twin of the business owner's strategic mind
+
+What VICKI Does:
+
+Answers business questions: "Can I afford to hire this person?" "Why is profit down?"
+Synthesizes intelligence: Morning briefings that combine cash, invoices, competitive threats, and memory
+Makes recommendations: "Don't price-match—here's why" or "Chase these 3 invoices first"
+Reasons through complexity: Chain-of-thought analysis, hypothesis testing, confidence calibration
+Proactive insights: "By the way, I noticed your payment terms are slowing..."
+Key Capabilities:
+
+LangGraph-based reasoning workflows
+Multi-source data synthesis (Cash, Invoices, War Room, Memory)
+Persona adaptation (Strategic / Operational / Financial modes)
+Conversation memory across sessions
+Source citation for every claim
+Morning briefing generation
+Architecture:
+
+VICKI Brain Components:
+├─ VICKIEngine (677 lines) — Core chat interface
+├─ VICKIReasoningEngine (344 lines) — Chain-of-thought logic
+├─ Email Inbox (375 lines) — Identity gate + email parsing
+├─ Memory Layer integration — Persistent context
+└─ Silicon CFO integration — Financial intelligence
+
+Data Sources:
+├─ InvoiceRepository (overdue invoices, payment status)
+├─ MatchResultRepository (invoice-PO exceptions)
+├─ MemoryService (conversation history, preferences, decisions)
+├─ Silicon CFO (cash position, forecasts)
+└─ War Room (competitive intelligence)
+Example Interaction:
+
+Owner: "Can I afford to hire a mechanic at $85K?"
+
+VICKI Process:
+1. Query Memory for hiring preferences and past decisions
+2. Pull cash position from Silicon CFO
+3. Calculate true cost ($85K + super + WorkCover + tax = $118K)
+4. Convert to billable hours (18 hrs/week at $150/hr)
+5. Check capacity (68% utilization = room for growth)
+6. Run 8-week cash forecast with hire vs. without
+7. Identify risk (Week 6 drops below safety buffer)
+8. Test hypothesis: "If 2 of 3 pending quotes convert first..."
+9. Form recommendation: "Yes, but delay start by 2 weeks"
+10. Store decision in Memory for future reference
+
+VICKI Response:
+"Yes, you can afford it, but with conditions. An $85K mechanic 
+costs $118K all-in. You need about 18 billable hours per week 
+to break even, and you have the capacity (currently at 68%). 
+
+But—your cash forecast shows you dipping below the safety 
+buffer in Week 6 if you hire now. Recommend delaying the 
+start to May 1st to give 2 of your 3 pending quotes time to 
+convert. That adds $15K to the buffer and makes this safe.
+
+Want me to run the full stress test scenarios?"
+VICKI Focus: "What should I do and why?"
+
+The Concierge — The Personal Assistant
+Primary Role: Owner's PA/secretary that protects time and handles execution
+
+What Concierge Does:
+
+Manages calendar: Intelligent scheduling with business priority awareness
+Triages email: 120 emails → 3 that need owner attention
+Drafts communications: Pre-writes responses based on context and persona
+Prepares meeting briefs: "Here's who you're meeting and what matters"
+Automates tasks: Booking confirmations, invoice generation, receipt filing
+Coordinates travel: Multi-day trips with optimal scheduling
+Key Capabilities:
+
+Smart calendar conflict resolution
+Priority-aware scheduling (integrates War Room + Scout data)
+Email triage with auto-handling (70%), auto-responding (35%), drafting (12%)
+Pre-meeting intelligence briefings (synthesizes Scout, Ghost, Archivist, Memory)
+Voice-first interaction (AirPods always-on)
+Multi-channel coordination (Email, SMS, WhatsApp, Slack)
+Travel logistics automation
+Architecture:
+
+Concierge Components:
+├─ ScribeOnboardingAgent (621 lines) — Campaign asset generation
+├─ Calendar orchestration — Google/Outlook integration
+├─ Email management — Inbox triage + drafting
+├─ Communication router — Multi-channel selection
+├─ Meeting prep system — Intelligence briefing generation
+└─ Task automation engine — Routine admin elimination
+
+Data Sources:
+├─ Scout (CRM + contact enrichment)
+├─ Ghost (competitive intelligence)
+├─ Archivist (meeting history, notes)
+├─ Librarian (past similar situations)
+├─ War Room (strategic priority scoring)
+├─ Memory Layer (preferences, communication style)
+└─ Silicon CFO (budget/expense tracking)
+Example Interaction:
+
+Owner (via voice): "I need to push the 1 o'clock meeting to 3."
+
+Concierge Process:
+1. Identify 1pm meeting: "Investor Pitch - John Williams"
+2. Check War Room priority: HIGH (strategic opportunity)
+3. Check 3pm slot: "Team Strategy Call" (internal)
+4. Assess conflict: Team call can move to 4pm
+5. Check attendees: Owner, John, Sarah (sales lead)
+6. Check Sarah's 4pm: Available ✓
+7. Check James's 4pm: Client site visit ❌
+8. Resolution: Record meeting for James to watch async
+9. Draft messages to all parties with context
+10. Store interaction in Memory: "Owner prefers afternoon for investor meetings"
+
+Concierge Response (voice):
+"Done. I've moved your investor meeting to 3pm and rescheduled 
+the team call to 4pm. John has been notified via SMS. The team 
+call is now at 4pm—James can't make it due to his site visit, 
+so I've set it to auto-record. Everyone else is confirmed.
+
+Is there anything else you need for the investor pitch? I have 
+the briefing ready when you want it."
+
+Total time: 8 seconds from request to execution
+Concierge Focus: "What needs doing and how do I make it effortless?"
+
+How They Work Together: The Unified Intelligence
+The Key Integration: Memory Layer
+The Memory Layer is the connective tissue that makes VICKI and Concierge feel like one coherent system.
+
+┌─────────────────────────────────────────────────────────┐
+│                   THE OWNER                             │
+│              (Single experience)                        │
+└──────────────┬────────────────────┬─────────────────────┘
+               │                    │
+       Voice / Chat           Email / Calendar
+               │                    │
+    ┌──────────▼─────────┐   ┌─────▼──────────────┐
+    │   VICKI (Brain)    │   │ Concierge (PA)     │
+    │   Strategic        │   │ Execution          │
+    │   Reasoning        │   │ Orchestration      │
+    └──────────┬─────────┘   └─────┬──────────────┘
+               │                    │
+               └────────┬───────────┘
+                        │
+             ┌──────────▼───────────┐
+             │   MEMORY LAYER       │
+             │   (Shared Context)   │
+             │                      │
+             │ • Conversations      │
+             │ • Decisions          │
+             │ • Preferences        │
+             │ • Relationships      │
+             │ • Strategic Intent   │
+             └──────────┬───────────┘
+                        │
+         ┏━━━━━━━━━━━━━━┻━━━━━━━━━━━━━━┓
+         ┃   ALL 8 IRONBARK PILLARS     ┃
+         ┃                              ┃
+         ┃ Revenue | Ops | CFO          ┃
+         ┃ War Room | Shield | More     ┃
+         ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+Memory Types: How Context Persists
+The Memory Layer stores 4 types of knowledge that both VICKI and Concierge access:
+
+1. Episodic Memory — Time-Anchored Events
+What: Specific events that happened at specific times
+Retention: Permanent
+Examples:
+
+"Owner approved invoice #4521 for ABC Ltd on 2026-04-15"
+"Changed brake supplier from XYZ to ABC Auto Parts on March 15 due to pricing"
+"Lost deal with ConstructCo in September—timing wasn't right (but they just got funding)"
+Used By:
+
+VICKI: "Based on your decision last month to switch suppliers..."
+Concierge: "Last time Michael visited, his car got a parking fine—I've validated parking this time"
+2. Semantic Memory — Timeless Facts
+What: General knowledge about the business, preferences, and relationships
+Retention: Permanent
+Examples:
+
+"Owner prefers audio briefings over written reports"
+"ABC Ltd always pays 45 days late but they always pay"
+"Never compete on price—quality and service first"
+"Owner wants to work only 3 days/week by 2027"
+Used By:
+
+VICKI: "I'll give you the 3-minute audio brief instead of the written report"
+Concierge: "Based on your goal of 3-day work weeks, I've scheduled Fridays as no-meeting days"
+3. Working Memory — Current Context
+What: What's happening RIGHT NOW in this conversation/task
+Retention: 4 hours (then archived or promoted to episodic)
+Examples:
+
+"Currently discussing cash flow for Q2"
+"Owner asked about competitor pricing 3 messages ago"
+"Meeting prep in progress for 2pm investor pitch"
+Used By:
+
+VICKI: Maintains conversation thread without repetition
+Concierge: Coordinates multi-step tasks (email draft → approval → send)
+4. Relationship Memory — People & Entities
+What: Everything known about customers, suppliers, competitors, team members
+Retention: Permanent (updated continuously)
+Examples:
+
+"Michael Chen (ConstructCo CEO) - High-value prospect, just raised $2.4M"
+"Sarah (Sales Lead) - High-I personality, prefers warm personal communication"
+"Workshop Wizard (competitor) - Dropped prices 15% on April 21, threat level: medium"
+Used By:
+
+VICKI: "Based on Michael's funding round, this is the perfect time to pitch"
+Concierge: "Sarah prefers SMS over email, sending confirmation via text"
+Memory Storage Flow: How Context is Captured
+Every interaction feeds the Memory Layer:
+
+EXAMPLE: Owner has conversation with VICKI
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Owner: "I want to hire a mechanic at $85K. Can I afford it?"
+
+VICKI:
+1. Queries Memory Layer for related context:
+   - "What hiring decisions were made before?"
+   - "What's the owner's risk tolerance?"
+   - "Are there financial constraints?"
+   
+2. Retrieves:
+   - Semantic memory: "Never let cash reserves drop below $12K"
+   - Episodic memory: "Last hire (2024) took 4 months to break even"
+   - Relationship memory: "Pending quotes with Premium Motors ($8.4K)"
+
+3. Synthesizes answer with Silicon CFO data + Memory context
+
+4. Delivers response
+
+5. Stores NEW memories:
+   - Working memory: "Owner considering $85K hire"
+   - Episodic memory: "Owner asked about hiring on 2026-04-22, 
+     VICKI recommended delay to May 1 due to cash forecast"
+   - Semantic memory (if decision made): "Hiring threshold is 
+     18 billable hours/week minimum"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2 hours later: Concierge drafting email to recruiter
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Concierge:
+1. Query Memory: "What's the hiring status?"
+   
+2. Retrieves (from VICKI's earlier conversation):
+   - Working memory: "Owner considering $85K hire"
+   - Episodic memory: "VICKI recommended delay to May 1"
+   
+3. Drafts email:
+   "Hi [Recruiter], we're looking to bring on a qualified 
+   mechanic starting May 1st (not immediate). Salary range 
+   up to $85K. Can you send profiles?"
+
+4. Stores memory:
+   - Episodic: "Concierge contacted recruiter on 2026-04-22"
+   - Relationship: "Recruiter XYZ - hiring contact"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+RESULT: Concierge knew about the hiring discussion WITHOUT 
+the owner having to repeat themselves. Context flowed 
+automatically through Memory Layer.
+Cross-System Intelligence Flows
+How VICKI and Concierge share understanding in real scenarios:
+
+Scenario 1: The Complete Morning Experience
+7:45am — VICKI's Morning Briefing
+
+VICKI (audio podcast):
+"Morning Ben. Three things need attention today:
+
+1. Cash alert: You're at $14,200 truly spendable, just $2K 
+   above minimum. Chase the 3 overdue invoices totaling $6,400.
+
+2. Mrs Chen's Camry at 10am. Colin noted possible brake rotors 
+   last service. I've drafted an $850 quote—send before she arrives.
+
+3. Workshop Wizard dropped prices 15% yesterday. I've drafted 
+   retention messages for your top 20 customers."
+Data Sources VICKI Used:
+
+Silicon CFO → Cash position
+InvoiceRepository → Overdue invoices
+Archivist → Colin's note from 8 months ago about Mrs Chen
+War Room → Workshop Wizard price change detection
+Memory Layer → "Owner prefers proactive communication"
+7:46am — Concierge Takes Action
+
+Concierge (monitoring VICKI's briefing output):
+
+Sees "Mrs Chen quote needed"
+Queries Memory: "What's Mrs Chen's communication preference?"
+Retrieves: "High-S personality, prefers SMS, dislikes surprises"
+Drafts SMS (adapted for her persona): "Hi Mrs Chen, Colin had a note from your last service about brake noise. We've prepared a quote for pads & rotors ($850) in case needed. We'll inspect first and only proceed with your OK. See you at 10am! - Sarah"
+Owner approves with one tap
+Message sent
+Stores in Memory: "Mrs Chen quote sent at 7:48am"
+Result: VICKI identified the need (strategic), Concierge executed it (tactical). Both used Memory Layer for context. Owner just taps "Approve."
+
+Scenario 2: Meeting Coordination + Intelligence
+CONCIERGE receives meeting request (email):
+
+From: Michael Chen <michael@constructco.com.au>
+"Hi, can we meet next week to discuss our expansion plans?"
+Concierge Process:
+
+Who is this? Query Scout + Memory:
+
+Company: ConstructCo Pty Ltd
+Role: CEO
+Relationship: Prospect (met 3 months ago)
+Last interaction stored in Memory: "Sept 2025—interested but timing not right"
+Ghost Intel (War Room): "Just raised $2.4M funding"
+What's the priority? Query War Room:
+
+Lead Score: 87/100
+Deal Size: Estimated $180K
+Timing: 🟢 HOT (expansion = buying signal)
+Priority: HIGH
+When should we meet? Check calendar + Memory:
+
+Memory: "Owner not a morning person, prefers post-lunch for strategic meetings"
+Available: Tuesday 2pm (optimal), Wednesday 11am (acceptable)
+Recommendation: Tuesday 2pm
+Draft response: "Hi Michael, great to hear from you! Congratulations on the funding round—exciting times for ConstructCo. I'd love to discuss your expansion plans. How does Tuesday, Dec 31st at 2pm work for you?"
+
+Auto-schedule intelligence gathering:
+
+T-minus 60 minutes: Concierge prepares meeting brief
+Triggers Scout: Update ConstructCo profile
+Triggers Ghost: Pull competitive intel on construction industry
+Triggers Librarian: Find similar successful pitches
+Triggers VICKI: Synthesize all data into 3-minute audio brief
+VICKI's Pre-Meeting Brief (Tuesday 1pm):
+
+🎙️ "Hi, you've got Michael Chen from ConstructCo in an hour.
+
+WHO HE IS:
+Michael is the CEO. You met him in September—he liked your 
+approach but said timing wasn't right. Well, timing just got 
+right. They raised $2.4M three weeks ago.
+
+WHAT THEY WANT:
+They're expanding from 12 to 25 staff and opening two new 
+offices. Based on similar deals, this is roughly a $180K 
+opportunity.
+
+WHY NOW:
+The funding gives them confidence. Their main competitor 
+(BuildPro) just lost a major contract, so there's market 
+share up for grabs. Michael knows this is his moment.
+
+YOUR EDGE:
+You already worked with them once successfully. Plus, you 
+have local Brisbane contacts through the Sarah connection.
+
+RECOMMENDED APPROACH:
+Congratulations on funding → Reference first project → Ask 
+about expansion vision → Position as 'reliable partner who 
+already knows them' vs. unknown providers.
+
+ONE MORE THING:
+His company car got a parking fine last time. I've validated 
+parking for him today—it's sorted."
+Components:
+
+Concierge: Scheduled meeting, drafted response, coordinated prep
+Scout: Enriched contact data
+Ghost: Competitive intelligence
+Archivist: Meeting history
+Memory Layer: Past conversations, parking fine incident
+VICKI: Strategic synthesis of all data into actionable brief
+Result: Owner walks into meeting fully prepared without spending 45 minutes researching. The system "remembered" everything and coordinated across 6 different pillars.
+
+The Founder's Intent Ledger: Strategic Understanding
+Beyond data—the system understands VALUES and GOALS:
+
+The Memory Layer includes a special section called Founder's Intent Ledger (planned Group B feature):
+
+What It Stores:
+1. Personal Vision & Goals
+
+- "I want to work only 3 days a week by 2027"
+- "Exit strategy: Sell business in $10M-$15M range"
+- "Hand business to daughter in 5 years"
+2. Business Philosophy & Values
+
+- "We never compete on price alone—quality and service first"
+- "Sustainability matters more than quarterly results"
+- "Speed of response is our competitive advantage"
+3. Risk Tolerance & Constraints
+
+- "Never let cash reserves drop below $12K"
+- "No debt above 30% of annual revenue"
+- "Protect brand reputation at all costs"
+4. Communication Preferences
+
+- "I prefer audio briefings over reading reports"
+- "Give me hard truths in the morning, not at night"
+- "Use Aussie slang, speak like a mate"
+How It Changes Responses:
+WITHOUT Founder's Intent:
+
+VICKI: "Revenue is down 5% this month. Should we discount?"
+WITH Founder's Intent:
+
+VICKI: "Revenue is down 5%, but based on your Founder Intent 
+of 'never competing on price,' I've instructed the War Room 
+to find 3 premium differentiators we can market instead. 
+Also, you wanted to work 3 days/week by 2027—discounting 
+would increase customer volume, which works AGAINST that goal. 
+Here's the plan..."
+The system doesn't just execute—it ALIGNS execution with your strategic vision.
+
+Persona Adaptation: Speaking the Right Language
+Both VICKI and Concierge adapt their communication style based on who they're talking to:
+
+VICKI's 3 Personas
+1. Strategic Persona (for Owners/Directors)
+Focus: Big picture, risks, opportunities, trends
+Tone: Direct, forward-looking
+Example: "Cash is strong, but payment times are slowing—costing you $8K in opportunity cost. Recommend early payment incentives."
+2. Operational Persona (for Managers/Team Leads)
+Focus: Tasks, bottlenecks, workflow, queue status
+Tone: Practical, action-oriented
+Example: "You have 3 overdue invoices needing follow-up. INV-0341 ($5,200) is 11 days overdue—contact ABC Ltd today."
+3. Financial Persona (for Bookkeepers/CFOs)
+Focus: Cash, invoices, payments, compliance, forecasts
+Tone: Precise, numbers-driven
+Example: "Bank balance: $45,230. Outstanding payables: $16,730. Truly spendable: $28,500. Data confidence: 92%."
+Concierge's Communication Adaptation
+Concierge uses Psychologist DISC profiling to adapt external communications:
+
+High-D (Dominant/Decisive)
+Message: "John - Hilux due for service. 3 slots: Wed 2pm, Thu 10am, 
+Fri 9am. Which works?"
+
+Why: 12 words, direct, options given, no fluff
+High-I (Influential/Relationship-Focused)
+Message: "Hi Margaret! 😊 Hope you're well. Just wanted to reach 
+out—your Camry is due for its service soon. We've looked after it 
+for almost 5 years now and want to keep it running beautifully for 
+you. Would love to get you booked in. When suits you best? - Sarah"
+
+Why: 48 words, warm, relationship-focused, personal connection
+High-C (Conscientious/Analytical)
+Message: "Hi David, your BMW 3-series (VIN ending 8462) is now at 
+62,450km—due for the 60,000km major service as per manufacturer 
+schedule. Required items: oil + filter (Castrol Edge 5W-30), air 
+filter, cabin filter, brake fluid test, full inspection. Estimated 
+cost: $485-545. Available dates: Wed 17 Apr 2pm, Thu 18 Apr 10am, 
+Fri 19 Apr 9am. Confirm preferred time and I'll send detailed 
+quote. - Colin"
+
+Why: 78 words, data-rich, precise, manufacturer-referenced
+Same task (service reminder), three completely different approaches—all personalized automatically based on Memory Layer DISC profiles.
+
+Why This Architecture Creates "Unified Understanding"
+The Client Never Repeats Themselves
+Traditional System:
+
+Customer tells receptionist about brake noise
+  ↓
+Receptionist writes note
+  ↓
+Mechanic reads note (maybe)
+  ↓
+Owner asks "What was the issue?" later
+  ↓
+Customer has to explain again
+Ironbark with Memory Layer:
+
+Customer mentions brake noise to Soldier (voice AI)
+  ↓
+Stored in Memory: "Mrs Chen - brake noise complaint"
+  ↓
+VICKI includes in morning briefing: "Mrs Chen has brake noise"
+  ↓
+Concierge drafts pre-arrival quote: "We prepared quote for brakes"
+  ↓
+Owner asks VICKI: "What's the Chen issue?"
+  ↓
+VICKI: "She mentioned brake noise 8 months ago. Colin noted 'check 
+       rotors next service.' Quote already sent this morning."
+ONE mention → ENTIRE SYSTEM knows.
+
+Cross-System Coordination is Invisible
+What the Owner Sees:
+
+"The system just KNOWS what I need."
+What's Actually Happening Behind the Scenes:
+
+MORNING (7:45am):
+├─ VICKI generates briefing
+│   └─ Queries: Silicon CFO, InvoiceRepo, War Room, Memory
+│   └─ Synthesizes: Cash alert, overdue invoices, competitive threats
+│   └─ Stores in Memory: "Briefing delivered 7:45am"
+│
+├─ Concierge listens to briefing output
+│   └─ Sees: "Mrs Chen quote needed"
+│   └─ Queries Memory: "Mrs Chen communication preference?"
+│   └─ Drafts SMS (High-S persona adapted)
+│   └─ Stores in Memory: "Quote sent 7:48am"
+│
+DAY (2:00pm):
+├─ Meeting: Michael Chen (ConstructCo)
+│   └─ Concierge prepared: Calendar booked, briefing scheduled
+│   └─ VICKI delivered: 3-min audio brief at 1pm
+│   └─ Scout enriched: Updated company profile
+│   └─ Ghost provided: Competitive battlecard
+│   └─ Memory retrieved: "Parking validated (learned from last time)"
+│
+EVENING (6:30pm):
+├─ Owner asks VICKI via voice: "How did it go today?"
+│   └─ VICKI queries Memory: "What happened today?"
+│   └─ Retrieves:
+│       - Morning briefing delivered
+│       - Mrs Chen quote sent (no response yet)
+│       - Michael Chen meeting (Archivist has notes)
+│       - 3 invoices still overdue (no payments received)
+│   └─ Responds: "Three big things today: Mrs Chen quote is out, 
+│                 Michael Chen meeting went well (Archivist captured 
+│                 action items), and those 3 overdue invoices still 
+│                 need chasing. Want me to draft the follow-ups?"
+The owner has ONE conversation. The system orchestrates DOZENS of processes.
+
+Technical Implementation: How It's Built
+Memory Layer Architecture (pgvector)
+# Memory Service — The Shared Brain
+
+class MemoryService:
+    async def store(
+        entity_id: str,
+        user_id: str,
+        memory_type: MemoryType,  # EPISODIC | SEMANTIC | WORKING | RELATIONSHIP
+        content: str,
+        importance: float,  # 0.0 - 1.0
+        metadata: dict = None,
+        agent_run_id: str = None
+    ):
+        """
+        Store a memory that ANY system can later retrieve.
+        
+        Examples:
+        - VICKI stores: "Owner asked about cash on 2026-04-22"
+        - Concierge stores: "Michael Chen prefers 2pm meetings"
+        - Archivist stores: "Meeting notes from investor pitch"
+        """
+        
+    async def query(
+        entity_id: str,
+        user_id: str,
+        query: str,
+        memory_types: list[MemoryType] = None,
+        limit: int = 5,
+        min_importance: float = 0.0
+    ) -> list[Memory]:
+        """
+        Retrieve relevant memories for ANY system to use.
+        
+        Uses:
+        - pgvector semantic similarity search
+        - Recency weighting
+        - Importance scoring
+        - Access count tracking (prevents decay)
+        
+        Examples:
+        - VICKI queries: "What hiring decisions were made?"
+        - Concierge queries: "What's owner's meeting preference?"
+        - Silicon CFO queries: "What's the cash safety minimum?"
+        """
+Cross-System Integration Pattern
+# How VICKI and Concierge share context
+
+class VICKIEngine:
+    async def chat(self, message: str, entity_id: str, user_id: str):
+        # 1. Query shared memory
+        memory_context = await self.memory_service.query(
+            entity_id=entity_id,
+            query=message,
+            limit=5
+        )
+        
+        # 2. Pull fresh data from pillars
+        cash_data = await self.silicon_cfo.get_cash_position(entity_id)
+        invoices = await self.invoice_repo.get_overdue(entity_id)
+        
+        # 3. Synthesize response
+        response = self._generate_response(message, memory_context, cash_data)
+        
+        # 4. Store NEW memory (for Concierge to use later)
+        await self.memory_service.store(
+            entity_id=entity_id,
+            user_id=user_id,
+            memory_type="episodic",
+            content=f"Owner asked: {message}. VICKI discussed: {response[:200]}",
+            importance=0.6
+        )
+        
+        return response
+
+
+class ConciergeEngine:
+    async def draft_email(self, recipient: str, entity_id: str):
+        # 1. Query SAME shared memory that VICKI uses
+        context = await self.memory_service.query(
+            entity_id=entity_id,
+            query=f"What do I know about {recipient}?",
+            memory_types=["relationship", "episodic"],
+            limit=10
+        )
+        
+        # 2. Access Scout/Ghost/War Room data (same pillars VICKI uses)
+        contact_profile = await self.scout.get_profile(recipient)
+        competitive_context = await self.war_room.get_intel(recipient)
+        
+        # 3. Draft with full context
+        draft = self._generate_personalized_email(
+            recipient, 
+            context,
+            contact_profile,
+            competitive_context
+        )
+        
+        # 4. Store memory (for VICKI to reference later)
+        await self.memory_service.store(
+            entity_id=entity_id,
+            memory_type="episodic",
+            content=f"Concierge drafted email to {recipient} re: {draft.subject}",
+            importance=0.4
+        )
+        
+        return draft
+Key Pattern: Both engines READ and WRITE to the same Memory Layer. This creates automatic context sharing without manual integration.
+
+Production Examples: Real Workflows
+Workflow 1: The Hiring Decision (Multi-Day, Cross-System)
+Day 1, Morning:
+
+Owner asks VICKI: "Can I afford to hire at $85K?"
+
+VICKI:
+1. Queries Memory: "What's hiring history? Risk tolerance?"
+2. Pulls Silicon CFO: Cash position, forecast
+3. Calculates: True cost = $118K (salary + on-costs)
+4. Runs 8-week cash projection
+5. Identifies risk: Week 6 below minimum if hiring now
+6. Recommends: "Yes, but delay to May 1 to convert pending quotes"
+7. Stores in Memory: "Owner considering $85K hire, VICKI recommended 
+   delay to May 1, importance=0.9"
+Day 1, Afternoon:
+
+Concierge sees calendar opening in 2 weeks.
+
+Concierge:
+1. Queries Memory: "Any upcoming decisions needing calendar space?"
+2. Retrieves: "Owner considering hire starting May 1"
+3. Automatically blocks: "May 1-15: Onboarding period (no external meetings)"
+4. Stores in Memory: "Concierge reserved onboarding time"
+Day 3:
+
+Recruiter emails: "Found 3 candidates, when can you interview?"
+
+Concierge:
+1. Receives email, triages as "needs owner decision"
+2. Queries Memory: "What's the hiring status?"
+3. Retrieves: "Owner plans May 1 start, onboarding time already blocked"
+4. Drafts response: "We're looking to start May 1. Can we interview 
+   candidates April 24-25?" (week before start)
+5. Owner approves one-tap
+6. Stores in Memory: "Interviews scheduled for Apr 24-25"
+Day 7:
+
+Owner to VICKI: "Did those pending quotes convert?"
+
+VICKI:
+1. Queries Memory: "Why does owner care about pending quotes?"
+2. Retrieves: "Hiring decision waiting on quote conversions"
+3. Checks current status: "2 of 3 quotes converted = $15.6K"
+4. Responds: "Yes! Premium Motors and Westside both signed this week. 
+   That's $15.6K added to the buffer, so your May 1 hire is safe. 
+   Do you want me to confirm with the recruiter?"
+5. Stores: "Quotes converted, hiring decision confirmed"
+Result: Owner made ONE decision on Day 1. The system remembered it, coordinated calendar, drafted communications, monitored conditions, and proactively updated when status changed. Zero repeated explanations.
+
+Workflow 2: The Meeting Preparation Chain
+T-minus 3 Days: Request Arrives
+
+Email from Michael Chen: "Can we meet next week?"
+
+Concierge:
+├─ Identifies: Michael Chen (ConstructCo CEO)
+├─ Queries Memory: "Last interaction: Sept 2025"
+├─ Queries Ghost: "They just raised $2.4M"
+├─ Queries War Room: "High priority (87/100 lead score)"
+├─ Drafts response + books Tuesday 2pm
+├─ Stores: "Michael Chen meeting scheduled Tue 2pm"
+└─ Auto-triggers: Pre-meeting prep workflow
+T-minus 2 Days: Intelligence Gathering
+
+Concierge orchestrates (invisible to owner):
+├─ Scout: Update ConstructCo company profile
+├─ Ghost: Pull competitive intel on construction industry
+├─ Archivist: Find notes from September meeting
+├─ Librarian: Find similar successful pitches
+├─ War Room: Prepare conquest strategy
+└─ All data flows to Memory Layer
+T-minus 60 Minutes: VICKI Synthesis
+
+Concierge triggers: "VICKI, generate Michael Chen brief"
+
+VICKI:
+1. Queries Memory: All ConstructCo data from last 3 days
+2. Pulls Scout profile, Ghost intel, Archivist notes, Librarian examples
+3. Synthesizes 3-minute audio brief
+4. Delivers via voice (owner's preference from Founder Intent)
+5. Stores: "Michael Chen brief delivered 1pm Tuesday"
+T-minus 0: Meeting Time
+
+Owner walks in fully prepared.
+
+Concurrent with meeting:
+├─ Archivist: Auto-recording for notes
+├─ Concierge: Monitoring for action items
+└─ Memory: Ready to store outcomes
+T-plus 10 Minutes: Follow-Up
+
+Meeting ends. Archivist captures: "Michael wants proposal by Friday"
+
+Concierge:
+1. Queries Memory: "What was discussed in meeting?"
+2. Retrieves: Archivist notes
+3. Finds action item: "Proposal by Friday"
+4. Checks calendar: Owner has Friday 10am free
+5. Adds calendar block: "Finalize ConstructCo proposal"
+6. Queries Librarian: "Find similar past proposals"
+7. Drafts outline based on historical template
+8. Owner notification: "Michael wants proposal by Fri. I've blocked 
+   Friday 10am and drafted an outline."
+T-plus 2 Days: Proposal Send
+
+Friday 9:30am - Concierge reminder:
+"Michael's proposal is due today. You have the draft ready. 
+Need anything else before I send at 2pm?"
+
+Owner reviews, approves.
+
+Concierge:
+├─ Sends proposal via email
+├─ Stores in Memory: "ConstructCo proposal sent Fri 2pm"
+├─ Sets follow-up reminder: "Monday 10am: Check if Michael received"
+└─ Updates War Room: "Deal in proposal stage"
+Result: ONE meeting request triggered a 23-step orchestration across 8 systems. Owner experienced: "The system just handled it."
+
+The "Wow" Moments: When Understanding is Visible
+Moment 1: "It Remembered from 8 Months Ago"
+Owner asks VICKI: "What was that brake issue with Mrs Chen?"
+
+VICKI: "Colin noted brake noise 8 months ago and said 'check rotors next service.' She's booked for 10am today, and I already sent her a quote this morning for $850 (pads + rotors). Based on her High-S personality profile, I sent it via SMS so she's not surprised.
+
+Want me to remind Colin before she arrives?"
+
+Behind the scenes:
+
+Memory retrieved: Colin's note from 8 months ago
+Memory retrieved: Mrs Chen DISC profile (High-S)
+Concierge acted: Sent quote this morning
+VICKI synthesized: All context in one response
+Moment 2: "It Knows My Values Without Being Told"
+Owner asks VICKI: "Workshop Wizard dropped prices 15%. Should we match?"
+
+VICKI: "No. Based on your Founder Intent of 'never compete on price,' I've already instructed War Room to prepare 3 premium differentiators to market instead: same-day service, Japanese import specialty, and personal relationships.
+
+Also, price-matching would increase volume, which works AGAINST your 2027 goal of 3-day work weeks.
+
+Here's the retention campaign I drafted instead..."
+
+Behind the scenes:
+
+Founder Intent retrieved: "Never compete on price"
+Founder Intent retrieved: "3-day work weeks by 2027"
+War Room: Already preparing alternative strategy
+Memory: Owner's strategic goals inform tactical decisions
+Moment 3: "It Coordinated 6 Systems Without Me Asking"
+Owner: "I need to visit Brisbane next month for 2-3 days."
+
+Concierge (2 minutes later): "Done. Feb 11-13 is optimal—Sarah is available and you have no major client commitments. I've booked:
+
+Flights (Business class, points used)
+Hotel (Sofitel, your preference)
+3 client meetings (Scout found prospects)
+1 site visit (new opportunity from War Room)
+Team dinner
+Brisbane office strategy session
+VICKI will deliver your pre-trip briefing on Feb 10 at 6pm (audio, your preference). Travel budget impact: $4,200, already cleared with Silicon CFO.
+
+Want me to add anything else?"
+
+Behind the scenes:
+
+Calendar: Analyzed 4 weeks, found optimal window
+Scout: Identified 3 Brisbane prospects
+War Room: Flagged site visit opportunity
+Silicon CFO: Budget impact calculated
+Memory: "Owner prefers Sofitel + audio briefings"
+VICKI: Auto-scheduled pre-trip brief for Feb 10 6pm
+Concierge: Coordinated all bookings
+Comparison: With vs. Without Unified Understanding
+WITHOUT Unified System (Traditional Business)
+8:00am - Owner checks email (42 unread)
+8:45am - Manually creates task list from emails
+9:15am - Meeting arrives (unprepared, scrambles to remember context)
+10:00am - Bookkeeper asks "Did you approve that invoice?" (Owner forgot)
+10:30am - Customer calls "I mentioned this last time" (no record)
+11:00am - Competitor changes pricing (Owner doesn't know for 3 days)
+12:00pm - Still working through emails
+1:00pm - Another meeting (unprepared again)
+2:00pm - Trying to remember "What did we decide about that supplier?"
+5:00pm - Realizes missed a critical follow-up
+6:00pm - Takes work home to catch up
+
+STRESS LEVEL: HIGH
+TIME ON STRATEGIC WORK: 2 hours (15%)
+THINGS THAT FELL THROUGH CRACKS: 5+
+WITH Unified System (Ironbark)
+7:45am - VICKI's 3-minute audio briefing (cash, invoices, competitors)
+7:48am - Concierge sent 3 pre-drafted messages for approval (1 tap each)
+8:00am - Inbox: 3 emails need attention (vs. 120—Concierge handled rest)
+9:30am - Meeting (fully prepared—VICKI's brief at 9am covered everything)
+10:30am - VICKI: "Mrs Chen hasn't responded to brake quote—want me to follow up?"
+11:00am - War Room alert: "Competitor price drop detected. Strategy drafted."
+12:00pm - Lunch (actually took lunch—Concierge blocked the time)
+1:00pm - Another meeting (prepared—Concierge coordinated brief)
+2:00pm - VICKI proactively: "You asked about supplier 2 weeks ago. Here's status."
+5:00pm - Concierge: "All action items handled. Tomorrow's briefing ready."
+6:00pm - Goes home (no work—system handled everything)
+
+STRESS LEVEL: LOW
+TIME ON STRATEGIC WORK: 10 hours (75%)
+THINGS THAT FELL THROUGH CRACKS: 0
+The difference: ONE intelligence that remembers, coordinates, anticipates, and executes across EVERYTHING.
+
+Summary: The Architecture of Understanding
+The Three-Layer Intelligence
+┌─────────────────────────────────────────────────────┐
+│  LAYER 1: THE BRAIN (VICKI)                         │
+│  • Strategic reasoning                              │
+│  • Multi-source synthesis                           │
+│  • Proactive insights                               │
+│  • Hypothesis testing                               │
+│  • Morning briefings                                │
+└─────────────────────────────────────────────────────┘
+                         ↕
+┌─────────────────────────────────────────────────────┐
+│  LAYER 2: THE ASSISTANT (Concierge)                 │
+│  • Calendar orchestration                           │
+│  • Email triage & drafting                          │
+│  • Meeting preparation                              │
+│  • Task automation                                  │
+│  • Communication routing                            │
+└─────────────────────────────────────────────────────┘
+                         ↕
+┌─────────────────────────────────────────────────────┐
+│  LAYER 3: THE MEMORY (Shared Context)               │
+│  • Episodic (events)                                │
+│  • Semantic (facts)                                 │
+│  • Working (current)                                │
+│  • Relationship (people)                            │
+│  • Founder Intent (values/goals)                    │
+└─────────────────────────────────────────────────────┘
+Why This Creates Unified Understanding
+Single Source of Truth — Memory Layer is shared by all systems
+Automatic Context Flow — Every system reads/writes to same memory
+No Repetition — Owner tells the system once, it knows forever
+Cross-System Coordination — VICKI identifies need, Concierge executes
+Persona Adaptation — Same intelligence, different communication styles
+Strategic Alignment — Founder Intent ensures decisions match values
+Continuous Learning — Every interaction enriches understanding
+Proactive Intelligence — System anticipates needs from past patterns
+The Client Experience
+The owner doesn't manage 15 agents.
+The owner doesn't juggle 8 systems.
+The owner has ONE conversation with ONE intelligence.
+
+That intelligence:
+
+Remembers everything
+Understands context
+Knows their values
+Anticipates needs
+Coordinates execution
+Never forgets
+Always prepared
+This is the "Vicki from I, Robot" experience.
+
+Document Status: ✅ Complete
+Last Updated: April 22, 2026
+Key Files Referenced:
+
+VICKI_BRAIN_SYSTEM_DEEP_DIVE.md
+NEW_ARCHITECTURE_PART_6_THE_CONCIERGE.md
+IRONBARK_FUNCTIONAL_GUIDE (C).md
+ARCHITECTURE_AUDIT_COMPLETE (C).md
+"The system doesn't just

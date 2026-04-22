@@ -1,5 +1,5 @@
-import React from 'react';
-import { ScrollArea } from './ui/scroll-area';
+import React from "react";
+import { ScrollArea } from "./ui/scroll-area";
 
 interface ThreeLayerProps {
   leftRail: React.ReactNode;
@@ -13,9 +13,7 @@ export function ThreeLayer({ leftRail, centre, rightPanel }: ThreeLayerProps) {
       {/* Left Rail */}
       <div className="w-[260px] md:w-[300px] flex-shrink-0 border-r border-border/50 bg-background/50 hidden md:flex flex-col">
         <ScrollArea className="h-full">
-          <div className="p-4 flex flex-col gap-4">
-            {leftRail}
-          </div>
+          <div className="p-4 flex flex-col gap-4">{leftRail}</div>
         </ScrollArea>
       </div>
 
@@ -29,11 +27,9 @@ export function ThreeLayer({ leftRail, centre, rightPanel }: ThreeLayerProps) {
       </div>
 
       {/* Right Panel */}
-      <div className="w-[320px] md:w-[360px] flex-shrink-0 border-l border-border/50 bg-background/30 hidden xl:flex flex-col">
+      <div className="w-[320px] md:w-[360px] flex-shrink-0 border-l border-border/50 bg-background/30 hidden lg:flex flex-col">
         <ScrollArea className="h-full">
-          <div className="p-6 flex flex-col gap-6">
-            {rightPanel}
-          </div>
+          <div className="p-6 flex flex-col gap-6">{rightPanel}</div>
         </ScrollArea>
       </div>
     </div>
