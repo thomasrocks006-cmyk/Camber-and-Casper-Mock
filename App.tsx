@@ -1,11 +1,33 @@
 import React, { useEffect } from 'react';
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
+import { AnimatePresence, motion } from "framer-motion";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAppStore } from './store';
 import { MOCK_LEADS, MOCK_ACTIONS, MOCK_LANES, MOCK_SIGNALS, MOCK_RESPONSE_PACKS } from './lib/mock-data';
 import { AppShell } from './components/app-shell';
+
+/** Shared page-level transition wrapper */
+const pageVariants = {
+  initial: { opacity: 0, y: 6 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.25, ease: [0.25, 0.1, 0.25, 1] } },
+  exit: { opacity: 0, y: -4, transition: { duration: 0.15 } },
+};
+
+function PageWrap({ children }: { children: React.ReactNode }) {
+  return (
+    <motion.div
+      variants={pageVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      className="flex flex-col h-full"
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 import Login from './pages/Login';
 import ModeSelect from './pages/ModeSelect';
@@ -25,17 +47,6 @@ import NotFound from './pages/not-found';
 
 const queryClient = new QueryClient();
 
-function PagePlaceholder({ title }: { title: string }) {
-  return (
-    <div className="p-8">
-      <h1 className="text-3xl font-bold mb-6">{title}</h1>
-      <div className="p-8 rounded-lg border border-border border-dashed text-center text-muted-foreground">
-        {title} surface coming soon.
-      </div>
-    </div>
-  );
-}
-
 function DefaultPage() {
   const [location, setLocation] = useLocation();
   useEffect(() => {
@@ -46,8 +57,8 @@ function DefaultPage() {
 
 function Router() {
   useEffect(() => {
-    useAppStore.setState({ 
-      leads: MOCK_LEADS, 
+    useAppStore.setState({
+      leads: MOCK_LEADS,
       preparedActions: MOCK_ACTIONS,
       outboundLanes: MOCK_LANES,
       signals: MOCK_SIGNALS,
@@ -58,24 +69,26 @@ function Router() {
 
   return (
     <AppShell>
-      <Switch>
-        <Route path="/" component={DefaultPage} />
-        <Route path="/login" component={Login} />
-        <Route path="/mode-select" component={ModeSelect} />
-        <Route path="/today" component={Today} />
-        <Route path="/command-center" component={CommandCenter} />
-        <Route path="/crm" component={CRM} />
-        <Route path="/signal-engine" component={SignalEngine} />
-        <Route path="/outbound" component={Outbound} />
-        <Route path="/intelligence" component={Intelligence} />
-        <Route path="/financial-intelligence" component={FinancialIntelligence} />
-        <Route path="/inbox" component={Inbox} />
-        <Route path="/workflows" component={Workflows} />
-        <Route path="/records" component={Records} />
-        <Route path="/readiness-lab" component={ReadinessLab} />
-        <Route path="/admin" component={Admin} />
-        <Route component={NotFound} />
-      </Switch>
+      <AnimatePresence mode="wait">
+        <Switch>
+          <Route path="/" component={DefaultPage} />
+          <Route path="/login">{() => <PageWrap><Login /></PageWrap>}</Route>
+          <Route path="/mode-select">{() => <PageWrap><ModeSelect /></PageWrap>}</Route>
+          <Route path="/today">{() => <PageWrap><Today /></PageWrap>}</Route>
+          <Route path="/command-center">{() => <PageWrap><CommandCenter /></PageWrap>}</Route>
+          <Route path="/crm">{() => <PageWrap><CRM /></PageWrap>}</Route>
+          <Route path="/signal-engine">{() => <PageWrap><SignalEngine /></PageWrap>}</Route>
+          <Route path="/outbound">{() => <PageWrap><Outbound /></PageWrap>}</Route>
+          <Route path="/intelligence">{() => <PageWrap><Intelligence /></PageWrap>}</Route>
+          <Route path="/financial-intelligence">{() => <PageWrap><FinancialIntelligence /></PageWrap>}</Route>
+          <Route path="/inbox">{() => <PageWrap><Inbox /></PageWrap>}</Route>
+          <Route path="/workflows">{() => <PageWrap><Workflows /></PageWrap>}</Route>
+          <Route path="/records">{() => <PageWrap><Records /></PageWrap>}</Route>
+          <Route path="/readiness-lab">{() => <PageWrap><ReadinessLab /></PageWrap>}</Route>
+          <Route path="/admin">{() => <PageWrap><Admin /></PageWrap>}</Route>
+          <Route>{() => <PageWrap><NotFound /></PageWrap>}</Route>
+        </Switch>
+      </AnimatePresence>
     </AppShell>
   );
 }

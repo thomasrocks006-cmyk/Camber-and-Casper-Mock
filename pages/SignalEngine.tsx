@@ -16,15 +16,12 @@ import {
   TrendingDown,
   TrendingUp,
   Zap,
-  ArrowUpRight,
   ArrowRight,
   Play,
   CheckCircle2,
-  ChevronDown,
   Building2,
   Clock,
   Target,
-  Shield,
 } from "lucide-react";
 
 const INTEL_STREAMS = [
@@ -156,13 +153,8 @@ const directionIcon = (d: "threat" | "opportunity") =>
 
 export default function SignalEngine() {
   const {
-    signals,
-    leads,
-    outboundLanes,
     responsePacks,
-    addLeadToLane,
     approveResponsePack,
-    logActivity,
   } = useAppStore();
   const { toast } = useToast();
 
@@ -203,7 +195,7 @@ export default function SignalEngine() {
       {/* Command Bar */}
       <div className="flex items-center justify-between px-6 py-3 border-b border-border shrink-0">
         <div>
-          <h1 className="text-xl font-semibold">Strategic Command</h1>
+          <h1 className="page-title">Strategic Command</h1>
           <p className="text-sm text-muted-foreground">
             Market intelligence and strategic response
           </p>
@@ -238,9 +230,9 @@ export default function SignalEngine() {
 
       <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Left Rail — Intelligence Streams */}
-        <div className="w-64 flex-shrink-0 border-r border-border bg-card/30 p-4 overflow-y-auto">
+        <div className="w-64 flex-shrink-0 border-r border-border bg-card/60 p-4 overflow-y-auto scroll-slim">
           <div className="mb-4">
-            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+            <h3 className="section-label mb-2">
               Saved Views
             </h3>
             <div className="space-y-1">
@@ -255,7 +247,7 @@ export default function SignalEngine() {
             </div>
           </div>
 
-          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+          <h3 className="section-label mb-2">
             Intelligence Streams
           </h3>
           <div className="space-y-0.5">
@@ -280,7 +272,7 @@ export default function SignalEngine() {
         </div>
 
         {/* Main Centre — Strategic Field */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-background/50">
+        <div className="flex-1 overflow-y-auto scroll-slim p-6 space-y-8 bg-background/50">
           {/* Competitor Cards */}
           <section>
             <div className="flex items-center gap-2 mb-4">
@@ -446,7 +438,7 @@ export default function SignalEngine() {
                           <Play className="w-3.5 h-3.5 fill-current" /> Deploy
                           to Outbound
                         </Button>
-                        <Button size="sm" variant="outline">
+                        <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); toast({ title: "Modify Pack", description: "Pack editing mode activated." }); }}>
                           Modify
                         </Button>
                       </div>

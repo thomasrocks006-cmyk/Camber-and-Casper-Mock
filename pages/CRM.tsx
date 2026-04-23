@@ -1,23 +1,14 @@
 import React, { useState } from "react";
-import { useAppStore, Lead, LeadStage } from "../store";
+import { useAppStore, LeadStage } from "../store";
 import { StatStrip } from "../components/stat-strip";
 import {
   RightPanel,
   PanelSection,
-  ConfidenceScore,
 } from "../components/right-panel";
 import { DiscBars } from "../components/disc-bars";
 import {
   Building2,
-  User,
-  Mail,
   Phone,
-  Calendar,
-  Clock,
-  CheckCircle2,
-  AlertTriangle,
-  ShieldAlert,
-  Activity,
   ChevronRight,
   ArrowRight,
   LayoutGrid,
@@ -26,6 +17,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const STAGES: LeadStage[] = [
   "New",
@@ -44,25 +42,31 @@ export default function CRM() {
   const [viewMode, setViewMode] = useState<"board" | "table">("board");
   const [focusedLeadId, setFocusedLeadId] = useState<string | null>(null);
   const [savedView, setSavedView] = useState<string | null>(null);
+  const [ownerFilter, setOwnerFilter] = useState("All Owners");
+  const [scoreFilter, setScoreFilter] = useState("Any Score");
 
   const focusedLead = leads.find((l) => l.id === focusedLeadId);
 
   const filteredLeads = React.useMemo(() => {
-    if (!savedView) return leads;
-    if (savedView === "High Intent – No Contact 7d")
-      return leads.filter((l) => l.score >= 70 && l.engagement < 50);
-    if (savedView === "Post-Meeting Follow-Ups")
-      return leads.filter(
-        (l) => l.stage === "Meeting Booked" || l.stage === "Qualified",
-      );
-    if (savedView === "Switch Targets (Ghost)")
-      return leads.filter((l) =>
-        l.currentTools?.some((t) =>
-          /repairdesk|workshop software|protractor|workshop wizard/i.test(t),
-        ),
-      );
-    return leads;
-  }, [leads, savedView]);
+    let result = leads;
+    if (savedView) {
+      if (savedView === "High Intent \u2013 No Contact 7d")
+        result = result.filter((l) => l.score >= 70 && l.engagement < 50);
+      else if (savedView === "Post-Meeting Follow-Ups")
+        result = result.filter(
+          (l) => l.stage === "Meeting Booked" || l.stage === "Qualified",
+        );
+      else if (savedView === "Switch Targets (Ghost)")
+        result = result.filter((l) =>
+          l.currentTools?.some((t) =>
+            /repairdesk|workshop software|protractor|workshop wizard/i.test(t),
+          ),
+        );
+    }
+    if (scoreFilter === "> 80") result = result.filter(l => l.score > 80);
+    else if (scoreFilter === "> 50") result = result.filter(l => l.score > 50);
+    return result;
+  }, [leads, savedView, ownerFilter, scoreFilter]);
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
     e.dataTransfer.setData("leadId", id);
@@ -107,8 +111,8 @@ export default function CRM() {
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-6 py-4 border-b border-border">
         <div>
-          <h1 className="text-xl font-semibold">CRM</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="page-title">CRM</h1>
+          <p className="page-subtitle">
             Leads, relationships, and pipeline intelligence
           </p>
         </div>
@@ -127,7 +131,7 @@ export default function CRM() {
               <List className="w-4 h-4" />
             </button>
           </div>
-          <Button>Create Lead</Button>
+          <Button onClick={() => toast({ title: "Create Lead", description: "Lead creation form would open here." })}>Create Lead</Button>
         </div>
       </div>
 
@@ -135,8 +139,8 @@ export default function CRM() {
 
       <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Left Filters */}
-        <div className="w-64 flex-shrink-0 border-r border-border bg-card/30 p-4 overflow-y-auto">
-          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">
+        <div className="w-64 flex-shrink-0 border-r border-border bg-card/60 p-4 overflow-y-auto scroll-slim">
+          <h3 className="section-label mb-4">
             Saved Views
           </h3>
           <div className="space-y-2 mb-8">
@@ -169,35 +173,45 @@ export default function CRM() {
             )}
           </div>
 
-          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">
+          <h3 className="section-label mb-4">
             Filters
           </h3>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">
+              <label className="section-label mb-2 block">
                 Owner
               </label>
-              <select className="w-full bg-secondary/50 border border-border rounded-md text-sm p-2 outline-none">
-                <option>All Owners</option>
-                <option>Ironbark</option>
-                <option>Human Team</option>
-              </select>
+              <Select value={ownerFilter} onValueChange={setOwnerFilter}>
+                <SelectTrigger className="w-full bg-secondary/50 border-border text-sm h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All Owners">All Owners</SelectItem>
+                  <SelectItem value="Ironbark">Ironbark</SelectItem>
+                  <SelectItem value="Human Team">Human Team</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <label className="text-sm font-medium text-foreground mb-1.5 block">
+              <label className="section-label mb-2 block">
                 Lead Score
               </label>
-              <select className="w-full bg-secondary/50 border border-border rounded-md text-sm p-2 outline-none">
-                <option>Any Score</option>
-                <option>&gt; 80</option>
-                <option>&gt; 50</option>
-              </select>
+              <Select value={scoreFilter} onValueChange={setScoreFilter}>
+                <SelectTrigger className="w-full bg-secondary/50 border-border text-sm h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Any Score">Any Score</SelectItem>
+                  <SelectItem value="> 80">&gt; 80</SelectItem>
+                  <SelectItem value="> 50">&gt; 50</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
 
         {/* Main Centre */}
-        <div className="flex-1 overflow-auto bg-background/50 relative">
+        <div className="flex-1 overflow-auto scroll-slim bg-background/50 relative">
           {viewMode === "board" ? (
             <div className="flex gap-4 p-6 h-full min-w-max">
               {STAGES.map((stage) => (
@@ -215,7 +229,7 @@ export default function CRM() {
                       {filteredLeads.filter((l) => l.stage === stage).length}
                     </span>
                   </div>
-                  <div className="flex-1 p-3 overflow-y-auto space-y-3">
+                  <div className="flex-1 p-3 overflow-y-auto scroll-slim space-y-3">
                     {filteredLeads
                       .filter((l) => l.stage === stage)
                       .map((lead) => (

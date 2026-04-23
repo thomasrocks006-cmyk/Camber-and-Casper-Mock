@@ -13,6 +13,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useAppStore, type AutonomyMode } from "@/store";
+import { useToast } from "@/hooks/use-toast";
 import {
   ShieldCheck,
   Database,
@@ -21,17 +22,20 @@ import {
   Lock,
   Key,
   Link as LinkIcon,
-  CheckCircle2,
 } from "lucide-react";
 
 export default function Admin() {
   const [activeSection, setActiveSection] = useState("Execution Policy");
   const { autonomyMode, setAutonomyMode } = useAppStore();
+  const { toast } = useToast();
+  const [draftSending, setDraftSending] = useState(true);
+  const [autoStrategy, setAutoStrategy] = useState(true);
+  const [priceNeg, setPriceNeg] = useState(false);
 
   const sections = [
     { id: "Execution Policy", icon: ShieldCheck },
     { id: "Integrations", icon: LinkIcon },
-    { id: "AI Preferences", icon: Settings },
+    { id: "Engine Preferences", icon: Settings },
     { id: "Notifications", icon: Bell },
     { id: "Compliance", icon: Lock },
     { id: "Permissions", icon: Key },
@@ -118,7 +122,7 @@ export default function Admin() {
                             confidence &gt; 95%
                           </div>
                         </div>
-                        <Switch defaultChecked />
+                        <Switch checked={draftSending} onCheckedChange={(v) => { setDraftSending(v); toast({ title: "Policy Updated", description: `Draft sending ${v ? 'enabled' : 'disabled'}.` }); }} />
                       </div>
                       <div className="flex items-center justify-between">
                         <div>
@@ -129,7 +133,7 @@ export default function Admin() {
                             System can move leads between lanes automatically
                           </div>
                         </div>
-                        <Switch defaultChecked />
+                        <Switch checked={autoStrategy} onCheckedChange={(v) => { setAutoStrategy(v); toast({ title: "Policy Updated", description: `Auto strategy shifts ${v ? 'enabled' : 'disabled'}.` }); }} />
                       </div>
                       <div className="flex items-center justify-between">
                         <div>
@@ -140,7 +144,7 @@ export default function Admin() {
                             System can offer up to 10% discount to close
                           </div>
                         </div>
-                        <Switch />
+                        <Switch checked={priceNeg} onCheckedChange={(v) => { setPriceNeg(v); toast({ title: "Policy Updated", description: `Price negotiation ${v ? 'enabled' : 'disabled'}.` }); }} />
                       </div>
                     </div>
                   </div>
@@ -150,7 +154,7 @@ export default function Admin() {
           </div>
         );
 
-      case "Integrations":
+      case "Integrations": {
         const integrations = [
           { name: "Xero", status: "Healthy", type: "Accounting" },
           { name: "Employment Hero", status: "Healthy", type: "Payroll" },
@@ -179,7 +183,7 @@ export default function Admin() {
                   Manage data sources and execution targets.
                 </p>
               </div>
-              <Button size="sm">Add Integration</Button>
+              <Button size="sm" onClick={() => toast({ title: "Add Integration", description: "Integration form would open here." })}>Add Integration</Button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -209,6 +213,7 @@ export default function Admin() {
             </div>
           </div>
         );
+      }
 
       case "Compliance":
         return (
@@ -294,7 +299,7 @@ export default function Admin() {
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-6 py-4 border-b border-border">
         <div>
-          <h1 className="text-xl font-semibold">Administration</h1>
+          <h1 className="page-title">Administration</h1>
           <p className="text-sm text-muted-foreground">
             Workspace configuration and policy limits
           </p>

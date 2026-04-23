@@ -22,6 +22,7 @@ export interface CallRecord {
   nextStep?: string;
   vibeScore?: number;
   outcome?: string;
+  outcomeDetail?: { summary?: string; objections?: string[]; nextStep?: string };
   recordingUrl?: string;
 }
 

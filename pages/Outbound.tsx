@@ -1,13 +1,13 @@
 import React, { useState } from "react";
-import { useAppStore, OutboundLane } from "../store";
+import { useAppStore } from "../store";
 import { StatStrip } from "../components/stat-strip";
 import {
   RightPanel,
   PanelSection,
-  ConfidenceScore,
 } from "../components/right-panel";
 import { DiscBars } from "../components/disc-bars";
 import { LaneCard } from "../components/lane-card";
+import { ManualCallConsole } from "../components/manual-call-console";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -30,6 +30,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 
 export default function Outbound() {
@@ -47,6 +53,7 @@ export default function Outbound() {
     | "Execute Pre-Approved"
     | "Autonomous Within Policy"
   >("Review Each Lane");
+
 
   const focusedLane = outboundLanes.find((l) => l.id === focusedLaneId);
   const laneLeads = focusedLane
@@ -104,17 +111,28 @@ export default function Outbound() {
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-6 py-4 border-b border-border">
         <div>
-          <h1 className="text-xl font-semibold">Outbound</h1>
+          <h1 className="page-title">Outbound</h1>
           <p className="text-sm text-muted-foreground">
             Execution lanes and live operations
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-secondary/50 border border-border/50 text-sm">
-            <Settings2 className="w-4 h-4 text-muted-foreground" />
-            <span className="font-medium">Policy: Review Each Lane</span>
-            <ChevronDown className="w-3 h-3 text-muted-foreground ml-1" />
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-secondary/50 border border-border/50 text-sm hover:bg-secondary transition-colors">
+                <Settings2 className="w-4 h-4 text-muted-foreground" />
+                <span className="font-medium">Policy: {selectedExecMode}</span>
+                <ChevronDown className="w-3 h-3 text-muted-foreground ml-1" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {(["Manual Only", "Review Each Lane", "Execute Pre-Approved", "Autonomous Within Policy"] as const).map(mode => (
+                <DropdownMenuItem key={mode} onClick={() => { setSelectedExecMode(mode); toast({ title: "Policy Updated", description: `Execution mode: ${mode}` }); }}>
+                  {mode} {mode === selectedExecMode && "✓"}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20 text-sm text-green-500 font-medium">
             <CheckCircle2 className="w-4 h-4" /> Pre-Flight Clear
           </div>
@@ -132,13 +150,13 @@ export default function Outbound() {
 
       <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Left Rail - Strategy Lanes */}
-        <div className="w-72 flex-shrink-0 border-r border-border bg-card/30 flex flex-col overflow-hidden">
+        <div className="w-72 flex-shrink-0 border-r border-border bg-card/60 flex flex-col overflow-hidden">
           <div className="p-4 border-b border-border/50 bg-secondary/20">
             <h3 className="text-sm font-medium text-foreground">
               Strategy Lanes
             </h3>
           </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div className="flex-1 overflow-y-auto scroll-slim p-4 space-y-3">
             {outboundLanes.map((lane) => (
               <LaneCard
                 key={lane.id}
@@ -148,10 +166,13 @@ export default function Outbound() {
               />
             ))}
           </div>
+
+          {/* Manual Call Console */}
+          <ManualCallConsole />
         </div>
 
         {/* Main Centre - Execution Table + Lane Analytics */}
-        <div className="flex-1 overflow-auto bg-background/50">
+        <div className="flex-1 overflow-auto scroll-slim bg-background/50">
           <div className="p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-medium">

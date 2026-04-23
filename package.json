@@ -5,6 +5,8 @@
   "scripts": {
     "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
+    "build:app": "vite build",
+    "start": "npx serve dist -s -l 5173",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
     "test": "vitest run",
@@ -42,8 +44,10 @@
     "prettier": "^3.8.1",
     "react": "catalog:",
     "react-dom": "catalog:",
+    "sharp": "^0.34.5",
     "typescript": "~5.9.2",
     "vite": "catalog:",
+    "vite-plugin-pwa": "^1.2.0",
     "vitest": "^4.1.4",
     "zustand": "^5.0.12"
   },

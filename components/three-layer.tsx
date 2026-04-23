@@ -1,5 +1,4 @@
 import React from "react";
-import { ScrollArea } from "./ui/scroll-area";
 
 interface ThreeLayerProps {
   leftRail: React.ReactNode;
@@ -11,26 +10,26 @@ export function ThreeLayer({ leftRail, centre, rightPanel }: ThreeLayerProps) {
   return (
     <div className="flex h-full w-full overflow-hidden bg-background">
       {/* Left Rail */}
-      <div className="w-[260px] md:w-[300px] flex-shrink-0 border-r border-border/50 bg-background/50 hidden md:flex flex-col">
-        <ScrollArea className="h-full">
-          <div className="p-4 flex flex-col gap-4">{leftRail}</div>
-        </ScrollArea>
+      <div className="w-[240px] md:w-[260px] flex-shrink-0 border-r border-white/[0.04] hidden md:flex flex-col">
+        <div className="flex-1 overflow-y-auto scroll-slim">
+          <div className="p-4 flex flex-col gap-3">{leftRail}</div>
+        </div>
       </div>
 
       {/* Centre */}
       <div className="flex-1 min-w-0 flex flex-col bg-background">
-        <ScrollArea className="h-full">
-          <div className="p-6 md:p-8 flex flex-col gap-6 max-w-5xl mx-auto w-full">
+        <div className="flex-1 overflow-y-auto scroll-slim">
+          <div className="p-5 md:p-6 flex flex-col gap-5 w-full">
             {centre}
           </div>
-        </ScrollArea>
+        </div>
       </div>
 
       {/* Right Panel */}
-      <div className="w-[320px] md:w-[360px] flex-shrink-0 border-l border-border/50 bg-background/30 hidden lg:flex flex-col">
-        <ScrollArea className="h-full">
-          <div className="p-6 flex flex-col gap-6">{rightPanel}</div>
-        </ScrollArea>
+      <div className="w-[300px] md:w-[340px] flex-shrink-0 border-l border-white/[0.04] hidden lg:flex flex-col">
+        <div className="flex-1 overflow-y-auto scroll-slim">
+          <div className="p-5 flex flex-col gap-5">{rightPanel}</div>
+        </div>
       </div>
     </div>
   );

@@ -13,14 +13,16 @@ import {
   ShieldAlert,
   Workflow,
   Clock,
-  Layers,
   Zap,
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { MOCK_WORKFLOWS } from "@/lib/mock-workflow";
 
 export default function Workflows() {
   const [activeCategory, setActiveCategory] = useState("Approvals");
   const [selectedTask, setSelectedTask] = useState(MOCK_WORKFLOWS[0]);
+  const [approvedIds, setApprovedIds] = useState<Set<string>>(new Set());
+  const { toast } = useToast();
 
   const categories = [
     "Approvals",
@@ -54,7 +56,15 @@ export default function Workflows() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-medium">{activeCategory} Queue</h2>
-        <Button variant="outline" size="sm" className="bg-secondary/50">
+        <Button variant="outline" size="sm" className="bg-secondary/50" onClick={() => {
+          const visible = MOCK_WORKFLOWS.filter(w => {
+            const tabCategoryMap: Record<string, string> = { Approvals: 'Approval', 'Follow-ups': 'Follow-up', Campaigns: 'Campaign', Billing: 'Billing', Compliance: 'Compliance', Meetings: 'Meeting', Automations: 'Automation' };
+            const mapped = tabCategoryMap[activeCategory];
+            return !mapped || w.category === mapped;
+          });
+          setApprovedIds(prev => { const next = new Set(prev); visible.forEach(w => next.add(w.id)); return next; });
+          toast({ title: "Bulk Approved", description: `${visible.length} tasks approved.` });
+        }}>
           Bulk Approve All
         </Button>
       </div>
@@ -113,14 +123,16 @@ export default function Workflows() {
                 <span>Created 10m ago</span>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); setSelectedTask(task); toast({ title: "Reviewing", description: task.title }); }}>
                   Review
                 </Button>
                 <Button
                   size="sm"
-                  className="bg-primary text-primary-foreground"
+                  className={approvedIds.has(task.id) ? "bg-green-600 text-white" : "bg-primary text-primary-foreground"}
+                  onClick={(e) => { e.stopPropagation(); setApprovedIds(prev => new Set(prev).add(task.id)); toast({ title: "Approved", description: task.title }); }}
+                  disabled={approvedIds.has(task.id)}
                 >
-                  Approve
+                  {approvedIds.has(task.id) ? "Approved" : "Approve"}
                 </Button>
               </div>
             </div>
@@ -132,7 +144,7 @@ export default function Workflows() {
 
   const rightPanel = (
     <RightPanel title="Task Intelligence">
-      <PanelSection title="Ironbark Rationale">
+      <PanelSection title="Why This Action">
         <div className="p-3 bg-primary/5 rounded-lg border border-primary/10 text-sm text-foreground/80 space-y-2">
           <span className="text-xs text-primary font-medium block mb-1">
             Prepared by Ironbark
@@ -251,7 +263,7 @@ export default function Workflows() {
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-6 py-4 border-b border-border">
         <div>
-          <h1 className="text-xl font-semibold">Workflows</h1>
+          <h1 className="page-title">Workflows</h1>
           <p className="text-sm text-muted-foreground">
             Orchestration and approval queues
           </p>

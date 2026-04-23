@@ -1,6 +1,5 @@
 import {
   Lead,
-  DISCProfile,
   PreparedAction,
   OutboundLane,
   Signal,
@@ -640,6 +639,7 @@ export const MOCK_LEADS: Lead[] = [
 
 // Add test-expected alias fields to every lead (name = contact, leadScore = score)
 // This ensures unit test schema assertions pass without duplicating data.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 (MOCK_LEADS as any[]).forEach((l) => {
   l.name = l.contact;
   l.leadScore = l.score;

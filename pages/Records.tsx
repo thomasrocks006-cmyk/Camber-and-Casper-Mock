@@ -1,12 +1,10 @@
 import React, { useState } from "react";
 import { ThreeLayer } from "@/components/three-layer";
 import { RightPanel, PanelSection } from "@/components/right-panel";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Building2,
   User,
-  FileText,
   Calendar,
   History,
   AlertTriangle,
@@ -18,6 +16,7 @@ import { MOCK_RECORDS } from "@/lib/mock-records";
 export default function Records() {
   const [activeType, setActiveType] = useState("Companies");
   const [selectedRecordId, setSelectedRecordId] = useState(MOCK_RECORDS[0].id);
+  const [filterText, setFilterText] = useState("");
 
   const types = [
     "Leads",
@@ -49,18 +48,20 @@ export default function Records() {
   );
 
   const centre = (
-    <div className="flex h-[calc(100vh-140px)] gap-6">
+    <div className="flex h-full gap-5">
       {/* Left List */}
       <div className="w-1/2 flex flex-col border border-border rounded-xl bg-card overflow-hidden">
         <div className="p-3 border-b border-border bg-secondary/30">
           <input
             type="text"
             placeholder="Filter records..."
+            value={filterText}
+            onChange={(e) => setFilterText(e.target.value)}
             className="w-full bg-background border border-border rounded p-2 text-sm outline-none focus:border-primary"
           />
         </div>
-        <div className="flex-1 overflow-y-auto divide-y divide-border/50">
-          {MOCK_RECORDS.map((record) => (
+        <div className="flex-1 overflow-y-auto scroll-slim divide-y divide-border/50">
+          {MOCK_RECORDS.filter(r => !filterText || r.name.toLowerCase().includes(filterText.toLowerCase()) || r.owner.toLowerCase().includes(filterText.toLowerCase())).map((record) => (
             <div
               key={record.id}
               onClick={() => setSelectedRecordId(record.id)}
@@ -93,7 +94,7 @@ export default function Records() {
       {/* Right Detail */}
       <div className="w-1/2 flex flex-col border border-border rounded-xl bg-card overflow-hidden">
         {selectedRecord ? (
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto scroll-slim">
             <div className="p-6 border-b border-border">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-12 h-12 rounded bg-secondary flex items-center justify-center border border-border">
@@ -178,7 +179,7 @@ export default function Records() {
 
   const rightPanel = selectedRecord ? (
     <RightPanel title="Record Intelligence">
-      <PanelSection title="AI Summary">
+      <PanelSection title="Summary">
         <div className="p-3 bg-secondary/50 rounded-lg border border-border text-sm text-foreground/80 leading-relaxed">
           {selectedRecord.summary}
         </div>
@@ -217,7 +218,7 @@ export default function Records() {
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-6 py-4 border-b border-border">
         <div>
-          <h1 className="text-xl font-semibold">Records</h1>
+          <h1 className="page-title">Records</h1>
           <p className="text-sm text-muted-foreground">
             System of record and entity management
           </p>

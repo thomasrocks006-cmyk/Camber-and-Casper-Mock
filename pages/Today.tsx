@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAppStore } from "../store";
 import { AnimatePresence, motion } from "framer-motion";
 import { StatStrip } from "../components/stat-strip";
@@ -9,7 +9,6 @@ import {
   ChevronRight,
   X,
   Edit2,
-  ShieldAlert,
   Zap,
   Phone,
   DollarSign,
@@ -20,6 +19,11 @@ import {
   Clock,
   AlertTriangle,
   ArrowRight,
+  CloudRain,
+  ShieldAlert,
+  Send,
+  TrendingUp,
+  Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -72,7 +76,7 @@ const impactColour: Record<string, string> = {
 };
 
 export default function Today() {
-  const { preparedActions, stats, viewMode, approveAction, skipAction } =
+  const { preparedActions, stats, approveAction, skipAction } =
     useAppStore();
   const { toast } = useToast();
 
@@ -82,6 +86,13 @@ export default function Today() {
   );
   const [callbackExpanded, setCallbackExpanded] = useState<string | null>(null);
   const [authSent, setAuthSent] = useState<Record<string, boolean>>({});
+  const [minutesAgo, setMinutesAgo] = useState(6);
+
+  // Simulate live timestamp ticker
+  useEffect(() => {
+    const t = setInterval(() => setMinutesAgo(prev => prev + 1), 60000);
+    return () => clearInterval(t);
+  }, []);
 
   const focusedAction =
     pendingActions.find((a) => a.id === focusedId) || pendingActions[0];
@@ -132,28 +143,127 @@ export default function Today() {
 
       <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Centre Feed */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-8">
-          {/* Hero — Ironbark Morning Briefing */}
-          <div className="p-5 rounded-xl border border-primary/30 bg-primary/5">
-            <div className="flex items-center gap-2 mb-3">
-              <Zap className="w-4 h-4 text-primary" />
-              <span className="text-xs font-semibold uppercase tracking-wider text-primary">
-                Ironbark Insight — Morning Brief
+        <div className="flex-1 overflow-y-auto scroll-slim p-6 space-y-8">
+          {/* Morning Briefing — Multi-Insight Cards */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
+                  <Zap className="w-3 h-3 text-primary" />
+                </div>
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Morning Brief
+                </span>
+              </div>
+              <span className="text-[10px] text-muted-foreground/60">
+                Prepared by Ironbark · Updated {minutesAgo} min ago
               </span>
             </div>
-            <p className="text-sm leading-relaxed text-foreground">
-              You have <strong>4 jobs awaiting customer authorisation</strong>{" "}
-              worth <strong>${totalJobsValue.toLocaleString()}</strong> —
-              Ironbark has reminder messages drafted and ready to send. Your
-              truly spendable cash sits at <strong>$20,220</strong> after
-              provisions; payroll runs Thursday and super is on track. A 3-day
-              rain event is forecast from Thursday — a wiper and tyre campaign
-              is pre-built for 28 overdue customers and requires one tap to
-              launch. RepairDesk raised prices 15% this week — a retention
-              message is ready for your top 20 customers.
-            </p>
-            <div className="mt-3 text-xs text-muted-foreground">
-              Prepared by Ironbark · Updated 6 min ago
+
+            <div className="grid grid-cols-2 gap-3">
+              {/* Revenue at Risk — Awaiting Auth */}
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05, duration: 0.3 }}
+                className="p-4 rounded-xl border border-amber-500/20 bg-gradient-to-br from-amber-500/5 to-transparent group hover:border-amber-500/40 transition-all cursor-default"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                    <ClipboardList className="w-4 h-4 text-amber-400" />
+                  </div>
+                  <span className="text-[10px] font-medium text-amber-400/70 bg-amber-500/10 px-2 py-0.5 rounded-full">
+                    Action Ready
+                  </span>
+                </div>
+                <div className="text-lg font-bold text-foreground tabular-nums">
+                  ${totalJobsValue.toLocaleString()}
+                </div>
+                <div className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                  <strong className="text-foreground">4 jobs</strong> awaiting customer authorisation — reminder messages drafted and ready to send.
+                </div>
+                <div className="mt-3 flex items-center gap-1.5 text-[10px] text-amber-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Send className="w-3 h-3" /> Send reminders before 3 PM for best approval rate
+                </div>
+              </motion.div>
+
+              {/* Cash Position */}
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.12, duration: 0.3 }}
+                className="p-4 rounded-xl border border-green-500/20 bg-gradient-to-br from-green-500/5 to-transparent group hover:border-green-500/40 transition-all cursor-default"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+                    <Wallet className="w-4 h-4 text-green-400" />
+                  </div>
+                  <span className="text-[10px] font-medium text-green-400/70 bg-green-500/10 px-2 py-0.5 rounded-full">
+                    On Track
+                  </span>
+                </div>
+                <div className="text-lg font-bold text-foreground tabular-nums">
+                  $20,220
+                </div>
+                <div className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                  <strong className="text-foreground">Truly spendable</strong> after provisions. Payroll runs Thursday — super is on track.
+                </div>
+                <div className="mt-3 flex items-center gap-1.5 text-[10px] text-green-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                  <TrendingUp className="w-3 h-3" /> $2.4k above 30-day average position
+                </div>
+              </motion.div>
+
+              {/* Weather Opportunity */}
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.19, duration: 0.3 }}
+                className="p-4 rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent group hover:border-primary/40 transition-all cursor-default"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+                    <CloudRain className="w-4 h-4 text-primary" />
+                  </div>
+                  <span className="text-[10px] font-medium text-primary/70 bg-primary/10 px-2 py-0.5 rounded-full">
+                    Opportunity
+                  </span>
+                </div>
+                <div className="text-lg font-bold text-foreground">
+                  3-Day Rain
+                </div>
+                <div className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                  Forecast from <strong className="text-foreground">Thursday</strong> — a wiper &amp; tyre campaign is pre-built for <strong className="text-foreground">28 overdue customers</strong>.
+                </div>
+                <div className="mt-3 flex items-center gap-1.5 text-[10px] text-primary font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ArrowRight className="w-3 h-3" /> One tap to launch campaign
+                </div>
+              </motion.div>
+
+              {/* Competitor Alert */}
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.26, duration: 0.3 }}
+                className="p-4 rounded-xl border border-red-500/20 bg-gradient-to-br from-red-500/5 to-transparent group hover:border-red-500/40 transition-all cursor-default"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                    <ShieldAlert className="w-4 h-4 text-red-400" />
+                  </div>
+                  <span className="text-[10px] font-medium text-red-400/70 bg-red-500/10 px-2 py-0.5 rounded-full">
+                    Competitor
+                  </span>
+                </div>
+                <div className="text-lg font-bold text-foreground">
+                  +15% Price Hike
+                </div>
+                <div className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                  <strong className="text-foreground">RepairDesk</strong> raised prices this week — a retention message is drafted for your <strong className="text-foreground">top 20 customers</strong>.
+                </div>
+                <div className="mt-3 flex items-center gap-1.5 text-[10px] text-red-400 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Send className="w-3 h-3" /> Review &amp; send retention messages
+                </div>
+              </motion.div>
             </div>
           </div>
 
@@ -196,7 +306,7 @@ export default function Today() {
                         <MessageSquare className="w-3.5 h-3.5 mr-1" /> Callback
                         Draft
                       </Button>
-                      <Button size="sm" variant="default">
+                      <Button size="sm" variant="default" onClick={() => toast({ title: "Dialling", description: `Calling ${call.caller} at ${call.company}…` })}>
                         <Phone className="w-3.5 h-3.5 mr-1" /> Call Now
                       </Button>
                     </div>
@@ -215,6 +325,7 @@ export default function Today() {
                             size="sm"
                             variant="default"
                             className="text-xs"
+                            onClick={() => toast({ title: "SMS Sent", description: `Callback message sent to ${call.caller}.` })}
                           >
                             Send as SMS
                           </Button>
@@ -222,6 +333,7 @@ export default function Today() {
                             size="sm"
                             variant="outline"
                             className="text-xs"
+                            onClick={() => toast({ title: "Edit Mode", description: "Draft opened for editing." })}
                           >
                             Edit
                           </Button>
@@ -472,6 +584,7 @@ export default function Today() {
                             variant="outline"
                             size="sm"
                             className="flex-1"
+                            onClick={(e) => { e.stopPropagation(); toast({ title: "Edit Action", description: "Action opened for editing." }); }}
                           >
                             <Edit2 className="w-4 h-4" />
                           </Button>
@@ -533,6 +646,7 @@ export default function Today() {
                         size="sm"
                         variant="outline"
                         className="text-xs whitespace-nowrap"
+                        onClick={() => toast({ title: "Action Launched", description: `${item.actionLabel} — executing now.` })}
                       >
                         {item.actionLabel}{" "}
                         <ArrowRight className="w-3 h-3 ml-1" />
@@ -558,6 +672,7 @@ export default function Today() {
                 <button
                   key={i}
                   className="w-full text-left p-3 rounded-lg bg-secondary/40 hover:bg-secondary border border-border/50 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => toast({ title: "Ironbark Thinking…", description: `Analysing: "${q}"` })}
                 >
                   {q}
                 </button>
@@ -629,6 +744,10 @@ export default function Today() {
               variant="outline"
               size="sm"
               className="w-full mt-2 justify-between"
+              onClick={() => {
+                JOBS_AWAITING_AUTH.forEach(j => setAuthSent(prev => ({ ...prev, [j.id]: true })));
+                toast({ title: "Reminders Sent", description: `${JOBS_AWAITING_AUTH.length} auth reminders sent.` });
+              }}
             >
               Send Auth Reminders <ChevronRight className="w-4 h-4" />
             </Button>

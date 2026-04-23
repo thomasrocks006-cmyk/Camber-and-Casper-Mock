@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAppStore } from "../store";
 import { StatStrip } from "../components/stat-strip";
 import {
@@ -26,7 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function CommandCenter() {
-  const { stats, responsePacks, approveResponsePack, addLeadToLane } =
+  const { stats, responsePacks, approveResponsePack } =
     useAppStore();
   const { toast } = useToast();
 
@@ -34,6 +34,14 @@ export default function CommandCenter() {
   const [focusedPackId, setFocusedPackId] = useState<string | null>(
     pendingPacks[0]?.id || null,
   );
+  const [activeView, setActiveView] = useState("All Activity");
+  const [checkedCommitments, setCheckedCommitments] = useState<Set<number>>(new Set());
+  const [minutesAgo, setMinutesAgo] = useState(4);
+
+  useEffect(() => {
+    const t = setInterval(() => setMinutesAgo(prev => prev + 1), 60000);
+    return () => clearInterval(t);
+  }, []);
 
   const handleApprove = (e: React.MouseEvent, packId: string) => {
     e.stopPropagation();
@@ -65,8 +73,8 @@ export default function CommandCenter() {
 
       <div className="flex flex-1 min-h-0 overflow-hidden">
         {/* Left Rail */}
-        <div className="w-64 flex-shrink-0 border-r border-border bg-card/30 flex flex-col p-4 overflow-y-auto">
-          <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">
+        <div className="w-64 flex-shrink-0 border-r border-border bg-card/60 flex flex-col p-4 overflow-y-auto scroll-slim">
+          <h3 className="section-label mb-4">
             Strategic Priorities
           </h3>
           <div className="space-y-1">
@@ -80,7 +88,8 @@ export default function CommandCenter() {
             ].map((view) => (
               <button
                 key={view.label}
-                className="w-full text-left px-3 py-2 rounded-md text-sm font-medium hover:bg-secondary transition-colors flex justify-between items-center group"
+                onClick={() => setActiveView(view.label)}
+                className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium transition-colors flex justify-between items-center group ${activeView === view.label ? 'bg-primary/10 text-primary' : 'hover:bg-secondary'}`}
               >
                 <span className="text-foreground/80 group-hover:text-foreground">
                   {view.label}
@@ -94,7 +103,7 @@ export default function CommandCenter() {
         </div>
 
         {/* Main Centre */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto scroll-slim p-6 space-y-6">
           <div className="p-6 rounded-xl border border-primary/20 bg-primary/5 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-1 h-full bg-primary"></div>
             <h2 className="text-2xl font-semibold mb-2 text-foreground">
@@ -166,6 +175,7 @@ export default function CommandCenter() {
                         variant="ghost"
                         size="sm"
                         className="text-muted-foreground"
+                        onClick={(e) => { e.stopPropagation(); toast({ title: "Modify Pack", description: "Pack editing mode activated." }); }}
                       >
                         Modify
                       </Button>
@@ -283,7 +293,7 @@ export default function CommandCenter() {
                   <span className="text-xs text-muted-foreground">
                     Last refreshed by Ironbark · 12m ago
                   </span>
-                  <Button variant="ghost" size="sm" className="text-primary">
+                  <Button variant="ghost" size="sm" className="text-primary" onClick={() => toast({ title: "Battlecard", description: "Opening full RepairDesk battlecard." })}>
                     Open full card <ArrowRight className="w-4 h-4 ml-1" />
                   </Button>
                 </div>
@@ -342,7 +352,7 @@ export default function CommandCenter() {
                   </div>
                   <div className="text-xs text-muted-foreground flex items-center justify-between mt-1">
                     <span>Suggested Fix: Draft prepared</span>
-                    <button className="text-primary hover:underline font-medium">
+                    <button className="text-primary hover:underline font-medium" onClick={() => toast({ title: "Fix Applied", description: "Follow-up draft sent to Northside Auto & Tyre." })}>
                       Apply
                     </button>
                   </div>
@@ -470,6 +480,8 @@ export default function CommandCenter() {
                   <input
                     type="checkbox"
                     className="w-4 h-4 rounded text-primary accent-primary shrink-0"
+                    checked={checkedCommitments.has(i)}
+                    onChange={() => setCheckedCommitments(prev => { const s = new Set(prev); s.has(i) ? s.delete(i) : s.add(i); return s; })}
                   />
                   <div className="flex-1 min-w-0">
                     <div className="text-sm text-foreground">{c.text}</div>
@@ -504,7 +516,7 @@ export default function CommandCenter() {
                   <Activity className="w-3 h-3" /> Trend: Improving
                 </span>
                 <span>·</span>
-                <span>Updated 4m ago</span>
+                <span>Updated {minutesAgo}m ago</span>
               </div>
             </div>
           </PanelSection>
@@ -577,6 +589,7 @@ export default function CommandCenter() {
                 <button
                   key={i}
                   className={`w-full text-left p-2.5 rounded border text-sm flex items-center justify-between gap-3 transition-colors ${move.type === "primary" ? "border-primary/30 bg-primary/5 hover:bg-primary/10 text-foreground" : "border-border/50 bg-secondary/20 hover:bg-secondary/40 text-foreground/80"}`}
+                  onClick={() => toast({ title: "Executing", description: move.label })}
                 >
                   <div>
                     <div className="font-medium text-sm">{move.label}</div>

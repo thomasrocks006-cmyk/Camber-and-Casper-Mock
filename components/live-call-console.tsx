@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useAppStore } from "../store";
 import {
   Mic,
@@ -6,11 +6,6 @@ import {
   Activity,
   StopCircle,
   Check,
-  AlertTriangle,
-  TrendingDown,
-  Brain,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 
 const DISPOSITION_OPTIONS = [
@@ -45,6 +40,7 @@ export function LiveCallConsole() {
     setDisposition,
   } = useAppStore();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeAlerts, setActiveAlerts] = useState<{ icon: string; text: string; colour: string }[]>([]);
 
   // Resolve the active lead so transcript + post-call panels are dynamic
   const activeLead = leads.find((l) => l.id === callConsole.leadId) ?? null;
@@ -60,12 +56,13 @@ export function LiveCallConsole() {
 
   useEffect(() => {
     if (callConsole.status === "dialing") {
+      setActiveAlerts([]);
       const t1 = setTimeout(() => appendTranscript("Dialing…"), 500);
       const t2 = setTimeout(() => {
         useAppStore.setState((s) => ({
           callConsole: { ...s.callConsole, status: "connected" },
         }));
-        appendTranscript("Connected. Ironbark coaching engine active.");
+        appendTranscript("Connected. Coaching engine active.");
       }, 2500);
       const t3 = setTimeout(
         () => appendTranscript(`Customer: Hello, this is ${contactFirst}.`),
@@ -85,6 +82,10 @@ export function LiveCallConsole() {
           ),
         7000,
       );
+      // Fire objection alert when customer signals hesitation
+      const tAlert1 = setTimeout(() => {
+        setActiveAlerts(prev => [...prev, { icon: "objection", text: "Objection Incoming — price/timing concern detected", colour: "amber" }]);
+      }, 7500);
       const t6 = setTimeout(
         () =>
           appendTranscript(
@@ -92,6 +93,10 @@ export function LiveCallConsole() {
           ),
         9000,
       );
+      // Engagement improving after targeted pitch
+      const tAlert2 = setTimeout(() => {
+        setActiveAlerts(prev => prev.filter(a => a.icon !== "objection").concat([{ icon: "positive", text: "Engagement Rising — prospect engaged on pain point", colour: "emerald" }]));
+      }, 11500);
       const t7 = setTimeout(
         () =>
           appendTranscript(
@@ -107,7 +112,7 @@ export function LiveCallConsole() {
       }, 13000);
 
       return () => {
-        [t1, t2, t3, t4, t5, t6, t7, t8].forEach(clearTimeout);
+        [t1, t2, t3, t4, t5, t6, t7, t8, tAlert1, tAlert2].forEach(clearTimeout);
       };
     }
     return undefined;
@@ -179,7 +184,7 @@ export function LiveCallConsole() {
           </div>
           <div
             ref={scrollRef}
-            className="flex-1 overflow-y-auto space-y-1.5 pr-1"
+            className="flex-1 overflow-y-auto scroll-slim space-y-1.5 pr-1"
           >
             {callConsole.transcript.map((line, i) => (
               <div
@@ -217,26 +222,35 @@ export function LiveCallConsole() {
           {isActive && (
             <div className="mt-3 border-t border-border/50 pt-3 space-y-1.5 shrink-0">
               <div className="text-xs font-medium text-muted-foreground mb-1">
-                Ironbark Live Alerts
+                Live Coaching
               </div>
-              <div className="flex items-center gap-2 text-xs p-2 rounded-lg bg-secondary/30 border border-border/50 text-muted-foreground">
-                <Brain className="w-3 h-3 shrink-0 text-primary" />
-                <span>Profile Shift — awaiting trigger</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs p-2 rounded-lg bg-secondary/30 border border-border/50 text-muted-foreground">
-                <AlertTriangle className="w-3 h-3 shrink-0 text-amber-400" />
-                <span>Objection Incoming — awaiting trigger</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs p-2 rounded-lg bg-secondary/30 border border-border/50 text-muted-foreground">
-                <TrendingDown className="w-3 h-3 shrink-0 text-red-400" />
-                <span>Engagement Dropping — awaiting trigger</span>
-              </div>
+              {activeAlerts.length === 0 ? (
+                <div className="flex items-center gap-2 text-xs p-2 rounded-lg bg-secondary/20 border border-border/30 text-muted-foreground/50">
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary/40 animate-pulse" />
+                  <span>Monitoring conversation…</span>
+                </div>
+              ) : (
+                activeAlerts.map((alert, i) => (
+                  <div key={i} className={`flex items-center gap-2 text-xs p-2 rounded-lg border ${
+                    alert.colour === "amber"
+                      ? "bg-amber-500/10 border-amber-500/20 text-amber-300"
+                      : alert.colour === "emerald"
+                      ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-300"
+                      : "bg-red-500/10 border-red-500/20 text-red-300"
+                  }`}>
+                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                      alert.colour === "amber" ? "bg-amber-400" : alert.colour === "emerald" ? "bg-emerald-400" : "bg-red-400"
+                    } animate-pulse`} />
+                    <span>{alert.text}</span>
+                  </div>
+                ))
+              )}
             </div>
           )}
         </div>
 
         {/* Right panel — live metrics or post-call */}
-        <div className="w-80 flex flex-col bg-card overflow-y-auto">
+        <div className="w-80 flex flex-col bg-card overflow-y-auto scroll-slim">
           {isActive && (
             <div className="p-4 space-y-4">
               {/* Vibe Score */}
@@ -298,7 +312,7 @@ export function LiveCallConsole() {
 
           {/* Post-call analysis panel */}
           {isCompleted && (
-            <div className="p-4 space-y-4 overflow-y-auto">
+            <div className="p-4 space-y-4">
               {/* Vibe + Sentiment summary */}
               <div className="flex gap-4">
                 <div className="flex-1 p-2 rounded-lg bg-secondary/30 border border-border/50 text-center">

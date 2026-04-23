@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- Background -->
+  <rect width="512" height="512" rx="112" fill="#0d1520"/>
+  <!-- Outer ring -->
+  <circle cx="256" cy="256" r="180" stroke="#3b6ea8" stroke-width="2" fill="none" opacity="0.4"/>
+  <!-- Inner mark — stylised C+C interlocked -->
+  <path d="M210 180 C160 180 128 214 128 256 C128 298 160 332 210 332 C232 332 250 324 264 310" stroke="#5b8fd4" stroke-width="18" stroke-linecap="round" fill="none"/>
+  <path d="M302 332 C352 332 384 298 384 256 C384 214 352 180 302 180 C280 180 262 188 248 202" stroke="#5b8fd4" stroke-width="18" stroke-linecap="round" fill="none"/>
+  <!-- Centre dot -->
+  <circle cx="256" cy="256" r="12" fill="#5b8fd4"/>
+  <!-- Subtle horizontal rule -->
+  <line x1="180" y1="256" x2="332" y2="256" stroke="#3b6ea8" stroke-width="1.5" opacity="0.5"/>
+</svg>

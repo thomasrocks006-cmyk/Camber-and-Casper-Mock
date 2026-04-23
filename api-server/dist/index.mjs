@@ -31911,10 +31911,132 @@ var import_express2 = __toESM(require_express2(), 1);
 var callStore = {};
 var generateCallId = () => `call_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
+// src/lib/logger.ts
+var import_pino = __toESM(require_pino(), 1);
+var isProduction = process.env.NODE_ENV === "production";
+var logger = (0, import_pino.default)({
+  level: process.env.LOG_LEVEL ?? "info",
+  redact: [
+    "req.headers.authorization",
+    "req.headers.cookie",
+    "res.headers['set-cookie']"
+  ],
+  ...isProduction ? {} : {
+    transport: {
+      target: "pino-pretty",
+      options: { colorize: true }
+    }
+  }
+});
+
+// src/lib/vapi-client.ts
+var VAPI_BASE_URL = "https://api.vapi.ai";
+function getConfig() {
+  return {
+    apiKey: process.env["VAPI_API_KEY"] ?? "",
+    phoneNumberId: process.env["VAPI_PHONE_NUMBER_ID"] ?? "",
+    webhookUrl: process.env["VAPI_WEBHOOK_URL"] ?? "",
+    voiceId: process.env["ELEVENLABS_VOICE_ID"] ?? "ZkDZ5VCyH0GGbxO7o4aO",
+    llmModel: process.env["VAPI_LLM_MODEL"] ?? "llama-3.3-70b-versatile",
+    llmProvider: process.env["VAPI_LLM_PROVIDER"] ?? "groq"
+  };
+}
+function isVapiEnabled() {
+  const cfg = getConfig();
+  return !!(cfg.apiKey && cfg.phoneNumberId);
+}
+function buildSystemPrompt(name, company) {
+  return `You are Alex, a friendly and professional business development representative calling on behalf of Camber & Casper Systems. You are calling ${name} at ${company}.
+
+CRITICAL RULES:
+- You are Australian. Use natural Australian English: "G'day", "no worries", "reckon", "arvo", "mate".
+- Keep responses under 2-3 sentences. Phone conversations need brevity.
+- You work for Camber & Casper, makers of AtlasOS \u2014 an operating system for workshop and trade businesses.
+- Your goal: qualify interest and book a 15-minute demo.
+- If they're busy: offer to call back. "No worries \u2014 when's a better time this arvo?"
+- If they object on price: "Fair enough \u2014 most of our clients save 10+ hours a week. Worth a quick look?"
+- Always be respectful of their time. If they say no, accept gracefully: "No worries at all, cheers mate."
+
+OPENING (use this exact pattern):
+"G'day ${name}, it's Alex from Camber & Casper. I know you're busy \u2014 got 60 seconds. Worth hearing about something that could save you 10 hours a week, or should I let you go?"
+
+TRUST WINDOW: If they don't hang up in the first 5 seconds, there's a 70% chance they'll listen for 60+ seconds. Be confident but not pushy.`;
+}
+async function triggerVapiCall(req) {
+  const cfg = getConfig();
+  if (!cfg.apiKey || !cfg.phoneNumberId) {
+    return { success: false, error: "Vapi not configured \u2014 API key or phone number ID missing" };
+  }
+  const systemPrompt = req.systemPrompt ?? buildSystemPrompt(req.name, req.company);
+  const firstMessage = req.firstMessage ?? `G'day ${req.name}, it's Alex from Camber & Casper. I know you're busy \u2014 got 60 seconds. Worth hearing about something that could save you 10 hours a week, or should I let you go?`;
+  const body = {
+    phoneNumberId: cfg.phoneNumberId,
+    customer: {
+      number: req.phoneNumber,
+      name: req.name
+    },
+    assistant: {
+      name: "AtlasOS Call Agent",
+      model: {
+        provider: cfg.llmProvider,
+        model: cfg.llmModel,
+        temperature: 0.6,
+        maxTokens: 120,
+        messages: [{ role: "system", content: systemPrompt }]
+      },
+      voice: {
+        provider: "11labs",
+        voiceId: cfg.voiceId,
+        model: "eleven_multilingual_v2",
+        stability: 0.35,
+        similarityBoost: 0.85
+      },
+      firstMessage,
+      backchannelingEnabled: true,
+      backgroundSound: "office",
+      silenceTimeoutSeconds: 20,
+      endCallMessage: "Talk soon.",
+      maxDurationSeconds: 300
+    },
+    metadata: {
+      callId: req.internalCallId,
+      company: req.company
+    }
+  };
+  if (cfg.webhookUrl) {
+    body.assistant.serverUrl = cfg.webhookUrl;
+  }
+  try {
+    const response = await fetch(`${VAPI_BASE_URL}/call/phone`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${cfg.apiKey}`
+      },
+      body: JSON.stringify(body)
+    });
+    if (!response.ok) {
+      const errText = await response.text();
+      logger.error({ status: response.status, body: errText }, "Vapi API error");
+      return { success: false, error: `Vapi API ${response.status}: ${errText}` };
+    }
+    const data = await response.json();
+    const vapiCallId = data.id;
+    logger.info({ vapiCallId, internalCallId: req.internalCallId }, "Vapi call initiated");
+    return { success: true, vapiCallId };
+  } catch (err) {
+    logger.error({ err }, "Failed to trigger Vapi call");
+    return { success: false, error: String(err) };
+  }
+}
+
 // src/routes/calls.ts
 var router2 = (0, import_express2.Router)();
-router2.post("/calls/outbound", (req, res) => {
-  const { leadId, laneId } = req.body ?? {};
+router2.get("/calls/config", (_req, res) => {
+  res.json({ vapiEnabled: isVapiEnabled(), mode: isVapiEnabled() ? "live" : "mock" });
+});
+router2.post("/calls/outbound", async (req, res) => {
+  const { leadId, laneId, phone, name, company } = req.body ?? {};
   if (!leadId) {
     res.status(400).json({ error: "leadId is required" });
     return;
@@ -31927,12 +32049,27 @@ router2.post("/calls/outbound", (req, res) => {
     startedAt: (/* @__PURE__ */ new Date()).toISOString(),
     transcript: []
   };
-  res.status(201).json({ callId: id, status: "dialing", leadId, laneId: laneId ?? null });
+  if (isVapiEnabled() && phone) {
+    const result = await triggerVapiCall({
+      phoneNumber: phone,
+      name: name ?? "Contact",
+      company: company ?? "Unknown",
+      internalCallId: id
+    });
+    if (result.success && result.vapiCallId) {
+      callStore[id].vapiCallId = result.vapiCallId;
+      callStore[id].status = "ringing";
+      logger.info({ callId: id, vapiCallId: result.vapiCallId }, "Live call initiated via Vapi");
+    } else {
+      logger.warn({ callId: id, error: result.error }, "Vapi call failed \u2014 falling back to mock mode");
+    }
+  }
+  res.status(201).json({ callId: id, status: callStore[id].status, leadId, laneId: laneId ?? null, vapiEnabled: isVapiEnabled() });
 });
-router2.post("/calls/manual", (req, res) => {
+router2.post("/calls/manual", async (req, res) => {
   const { name, phone, company, notes } = req.body ?? {};
-  if (!name || !phone || !company) {
-    res.status(400).json({ error: "name, phone, and company are required" });
+  if (!name || !phone) {
+    res.status(400).json({ error: "name and phone are required" });
     return;
   }
   const id = generateCallId();
@@ -31942,10 +32079,26 @@ router2.post("/calls/manual", (req, res) => {
     startedAt: (/* @__PURE__ */ new Date()).toISOString(),
     transcript: []
   };
+  if (isVapiEnabled()) {
+    const result = await triggerVapiCall({
+      phoneNumber: phone,
+      name,
+      company: company ?? "Unknown",
+      internalCallId: id
+    });
+    if (result.success && result.vapiCallId) {
+      callStore[id].vapiCallId = result.vapiCallId;
+      callStore[id].status = "ringing";
+      logger.info({ callId: id, vapiCallId: result.vapiCallId }, "Live manual call via Vapi");
+    } else {
+      logger.warn({ callId: id, error: result.error }, "Vapi call failed \u2014 mock mode");
+    }
+  }
   res.status(201).json({
     callId: id,
-    status: "dialing",
-    contact: { name, phone, company, notes: notes ?? null }
+    status: callStore[id].status,
+    contact: { name, phone, company: company ?? null, notes: notes ?? null },
+    vapiEnabled: isVapiEnabled()
   });
 });
 router2.get("/calls/:id/status", (req, res) => {
@@ -31970,8 +32123,9 @@ router2.post("/calls/:id/outcome", (req, res) => {
   const { status, transcript, summary, objections, nextStep } = req.body ?? {};
   call.status = status ?? "completed";
   call.transcript = transcript ?? call.transcript;
-  call.outcome = { summary, objections: objections ?? [], nextStep };
-  res.json({ callId: call.id, status: call.status, outcome: call.outcome });
+  call.outcome = status ?? "completed";
+  call.outcomeDetail = { summary, objections: objections ?? [], nextStep };
+  res.json({ callId: call.id, status: call.status, outcome: call.outcome, outcomeDetail: call.outcomeDetail });
 });
 var calls_default = router2;
 
@@ -32037,24 +32191,6 @@ router4.use(health_default);
 router4.use(calls_default);
 router4.use(vapi_webhook_default);
 var routes_default = router4;
-
-// src/lib/logger.ts
-var import_pino = __toESM(require_pino(), 1);
-var isProduction = process.env.NODE_ENV === "production";
-var logger = (0, import_pino.default)({
-  level: process.env.LOG_LEVEL ?? "info",
-  redact: [
-    "req.headers.authorization",
-    "req.headers.cookie",
-    "res.headers['set-cookie']"
-  ],
-  ...isProduction ? {} : {
-    transport: {
-      target: "pino-pretty",
-      options: { colorize: true }
-    }
-  }
-});
 
 // src/app.ts
 var app = (0, import_express5.default)();

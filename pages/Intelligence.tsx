@@ -11,12 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Sparkles,
-  BrainCircuit,
   Activity,
   TrendingUp,
   TrendingDown,
-  Target,
-  Search,
   Loader2,
   CheckCircle2,
   ArrowRight,
@@ -25,7 +22,6 @@ import {
   LineChart,
   Line,
   XAxis,
-  YAxis,
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
@@ -194,7 +190,7 @@ export default function Intelligence() {
       <Card className="p-6">
         <div className="flex items-center gap-3 mb-4 text-primary">
           <Sparkles className="w-5 h-5" />
-          <h2 className="text-lg font-semibold">Ironbark Insight Summary</h2>
+          <h2 className="text-lg font-semibold">Performance Summary</h2>
         </div>
         <p className="text-foreground/90 leading-relaxed">
           Quote approval rate is running 7% below the industry benchmark of 41%.
@@ -245,6 +241,7 @@ export default function Intelligence() {
                   variant="outline"
                   size="sm"
                   className="flex-1 sm:flex-none"
+                  onClick={() => toast({ title: "Pattern Ignored", description: `"${pattern.title}" moved to ignored.` })}
                 >
                   Ignore
                 </Button>
@@ -252,6 +249,7 @@ export default function Intelligence() {
                   variant="secondary"
                   size="sm"
                   className="flex-1 sm:flex-none"
+                  onClick={() => toast({ title: "Monitoring", description: `Tracking "${pattern.title}" for changes.` })}
                 >
                   Monitor
                 </Button>
@@ -449,7 +447,7 @@ export default function Intelligence() {
           RepairDesk raised prices 15% in April. 8 workshops in your area are
           actively evaluating alternatives.
         </div>
-        <Button className="w-full mt-3" size="sm" variant="outline">
+        <Button className="w-full mt-3" size="sm" variant="outline" onClick={() => toast({ title: "Campaign Activated", description: "Switch campaign launched for 8 workshops." })}>
           Activate Switch Campaign
         </Button>
       </PanelSection>
@@ -469,7 +467,7 @@ export default function Intelligence() {
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-6 py-4 border-b border-border">
         <div>
-          <h1 className="text-xl font-semibold">Intelligence</h1>
+          <h1 className="page-title">Intelligence</h1>
           <p className="text-sm text-muted-foreground">
             VICKI Ask · Pattern detection · Strategic synthesis
           </p>

@@ -7,7 +7,6 @@ import {
   Bell,
   CheckCircle2,
   ChevronDown,
-  Command,
   Database,
   GitBranch,
   Layers,
@@ -17,7 +16,6 @@ import {
   Radio,
   Search,
   Settings,
-  ShieldAlert,
   ShieldCheck,
   TrendingUp,
   Users,
@@ -34,25 +32,24 @@ import {
 import { LiveCallConsole } from "./live-call-console";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { autonomyMode, setAutonomyMode, viewMode, setViewMode, callConsole } =
     useAppStore();
 
   if (location === "/login" || location === "/mode-select")
     return <>{children}</>;
 
-  const navigation = [
+  const primaryNav = [
     { path: "/today", label: "Today", icon: MonitorPlay },
     { path: "/command-center", label: "Command", icon: Layers },
     { path: "/crm", label: "CRM", icon: Users },
     { path: "/signal-engine", label: "Strategic Command", icon: Radio },
     { path: "/outbound", label: "Outbound", icon: Phone },
     { path: "/intelligence", label: "Intelligence", icon: Zap },
-    {
-      path: "/financial-intelligence",
-      label: "Financial Intelligence",
-      icon: TrendingUp,
-    },
+  ];
+
+  const secondaryNav = [
+    { path: "/financial-intelligence", label: "Financial Intelligence", icon: TrendingUp },
     { path: "/inbox", label: "Inbox", icon: Mail },
     { path: "/workflows", label: "Workflows", icon: GitBranch },
     { path: "/records", label: "Records", icon: Database },
@@ -62,6 +59,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground dark">
+      {/* Top accent line */}
+      <div className="fixed top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/40 to-transparent z-50" />
       <CommandPalette />
 
       {/* Sidebar — collapses in Simple Mode */}
@@ -73,14 +72,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <img
               src={logoUrl}
               alt="Logo"
-              className="w-8 h-8 rounded bg-primary/20 object-cover"
+              className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/[0.06] object-cover"
             />
             {viewMode !== "Simple" && (
               <div className="flex flex-col">
-                <span className="leading-none tracking-tight">Ironbark</span>
-                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-                  Camber & Casper
-                </span>
+                <span className="text-sm font-semibold leading-none tracking-tight">Camber & Casper</span>
+                <span className="text-[10px] text-muted-foreground/60 font-medium mt-0.5">Systems</span>
               </div>
             )}
           </div>
@@ -192,11 +189,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         )}
 
         <nav
-          className={`flex-1 overflow-y-auto py-4 flex flex-col gap-1 ${viewMode === "Simple" ? "px-2 items-center" : "px-2"}`}
+          className={`flex-1 overflow-y-auto scroll-slim py-3 flex flex-col gap-0.5 ${viewMode === "Simple" ? "px-2 items-center" : "px-2"}`}
         >
           {(viewMode === "Simple"
-            ? navigation.filter((n) => ["/today", "/inbox"].includes(n.path))
-            : navigation
+            ? primaryNav.filter((n) => ["/today", "/inbox"].includes(n.path))
+            : primaryNav
           ).map((item) => {
             const Icon = item.icon;
             const isActive = location === item.path;
@@ -205,16 +202,50 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 key={item.path}
                 href={item.path}
                 title={viewMode === "Simple" ? item.label : undefined}
-                className={`${viewMode === "Simple" ? "p-2 justify-center" : "px-3 py-2"} rounded-md text-sm font-medium transition-colors flex items-center gap-3 ${
+                className={`${viewMode === "Simple" ? "p-2 justify-center" : "px-3 py-1.5"} rounded-lg text-sm font-medium transition-all duration-150 flex items-center gap-3 relative ${
                   isActive
-                    ? "bg-primary/10 text-primary"
-                    : "text-sidebar-foreground/70 hover:bg-secondary hover:text-sidebar-foreground"
+                    ? "bg-white/[0.06] text-foreground"
+                    : "text-sidebar-foreground/50 hover:bg-white/[0.04] hover:text-sidebar-foreground/80"
                 }`}
               >
+                {isActive && viewMode !== "Simple" && (
+                  <span className="absolute left-0 top-1.5 bottom-1.5 w-[2px] rounded-r bg-primary" />
+                )}
                 <Icon
-                  className={`w-4 h-4 ${isActive ? "text-primary" : "text-sidebar-foreground/50"}`}
+                  className={`w-4 h-4 ${isActive ? "text-primary" : ""}`}
                 />
                 {viewMode !== "Simple" && item.label}
+              </Link>
+            );
+          })}
+
+          {viewMode !== "Simple" && (
+            <div className="my-2 mx-3 h-px bg-white/[0.04]" />
+          )}
+
+          {(viewMode === "Simple"
+            ? []
+            : secondaryNav
+          ).map((item) => {
+            const Icon = item.icon;
+            const isActive = location === item.path;
+            return (
+              <Link
+                key={item.path}
+                href={item.path}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 flex items-center gap-3 relative ${
+                  isActive
+                    ? "bg-white/[0.06] text-foreground"
+                    : "text-sidebar-foreground/40 hover:bg-white/[0.04] hover:text-sidebar-foreground/70"
+                }`}
+              >
+                {isActive && (
+                  <span className="absolute left-0 top-1.5 bottom-1.5 w-[2px] rounded-r bg-primary" />
+                )}
+                <Icon
+                  className={`w-4 h-4 ${isActive ? "text-primary" : ""}`}
+                />
+                {item.label}
               </Link>
             );
           })}
@@ -226,38 +257,47 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {/* Topbar */}
         <header className="h-16 flex-shrink-0 border-b border-border bg-background flex items-center justify-between px-6 z-10">
           <div className="flex items-center gap-4 flex-1">
-            <button className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-secondary/50 text-sm text-muted-foreground hover:bg-secondary transition-colors w-64 border border-border/50">
-              <Search className="w-4 h-4" />
-              <span>Search everything...</span>
-              <div className="ml-auto flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 rounded bg-background border border-border text-[10px] font-medium font-mono text-muted-foreground">
+            <button onClick={() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.03] text-sm text-muted-foreground/50 hover:bg-white/[0.05] hover:text-muted-foreground transition-all duration-150 w-56 border border-white/[0.06]">
+              <Search className="w-3.5 h-3.5" />
+              <span className="text-xs">Search...</span>
+              <div className="ml-auto flex items-center gap-0.5">
+                <kbd className="px-1 py-0.5 rounded bg-white/[0.04] border border-white/[0.06] text-[9px] font-medium font-mono text-muted-foreground/40">
                   ⌘
                 </kbd>
-                <kbd className="px-1.5 py-0.5 rounded bg-background border border-border text-[10px] font-medium font-mono text-muted-foreground">
+                <kbd className="px-1 py-0.5 rounded bg-white/[0.04] border border-white/[0.06] text-[9px] font-medium font-mono text-muted-foreground/40">
                   K
                 </kbd>
               </div>
             </button>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full bg-secondary/50 border border-border/50">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              System Healthy
+            <div className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/80 animate-subtle-pulse"></span>
+              <span className="text-muted-foreground/70">Healthy</span>
             </div>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="p-2 rounded-md hover:bg-secondary text-muted-foreground transition-colors relative">
-                  <Bell className="w-5 h-5" />
+                <button className="p-2 rounded-lg hover:bg-white/[0.04] text-muted-foreground transition-all duration-150 relative">
+                  <Bell className="w-4.5 h-4.5" />
                   <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary"></span>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-80">
-                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">Notifications</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <div className="p-4 text-center text-sm text-muted-foreground">
-                  3 prepared actions await approval
-                </div>
+                {[
+                  { text: "3 prepared actions await your approval", time: "2m ago", urgent: true },
+                  { text: "Brett Kowalski quote expiring tomorrow", time: "18m ago", urgent: true },
+                  { text: "Payroll run scheduled for Thursday", time: "1h ago", urgent: false },
+                  { text: "RepairDesk pricing change detected", time: "2h ago", urgent: false },
+                  { text: "Weekly performance report ready", time: "4h ago", urgent: false },
+                ].map((n, i) => (
+                  <DropdownMenuItem key={i} className="flex flex-col items-start gap-1 py-2.5 cursor-pointer" onClick={() => setLocation(i < 2 ? '/today' : i === 2 ? '/workflows' : '/command-center')}>
+                    <span className={`text-sm ${n.urgent ? "text-foreground font-medium" : "text-muted-foreground"}`}>{n.text}</span>
+                    <span className="text-[10px] text-muted-foreground/50">{n.time}</span>
+                  </DropdownMenuItem>
+                ))}
               </DropdownMenuContent>
             </DropdownMenu>
 
@@ -279,7 +319,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 >
                   Switch to {viewMode === "Simple" ? "Detailed" : "Simple"} View
                 </DropdownMenuItem>
-                <DropdownMenuItem>Profile Settings</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLocation('/admin')}>Profile Settings</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <Link href="/login" className="w-full cursor-pointer">

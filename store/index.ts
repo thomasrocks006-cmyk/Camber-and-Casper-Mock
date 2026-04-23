@@ -387,7 +387,7 @@ export const useAppStore = create<AppState>((set) => ({
         (l) => l.id === pack.targetLane || l.name === pack.targetLane,
       );
 
-      let nextLanes = state.outboundLanes;
+      let nextLanes: typeof state.outboundLanes;
       if (targetLane) {
         const eligible = state.leads
           .filter((l) => !targetLane.leadIds.includes(l.id))

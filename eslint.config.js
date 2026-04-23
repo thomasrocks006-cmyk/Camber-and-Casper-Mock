@@ -46,6 +46,31 @@ export default [
         URL: 'readonly',
         URLSearchParams: 'readonly',
         React: 'readonly',
+        HTMLDivElement: 'readonly',
+        HTMLButtonElement: 'readonly',
+        HTMLInputElement: 'readonly',
+        HTMLElement: 'readonly',
+        HTMLParagraphElement: 'readonly',
+        HTMLHeadingElement: 'readonly',
+        HTMLAnchorElement: 'readonly',
+        HTMLSpanElement: 'readonly',
+        HTMLOListElement: 'readonly',
+        HTMLLIElement: 'readonly',
+        HTMLTableElement: 'readonly',
+        HTMLTableSectionElement: 'readonly',
+        HTMLTableRowElement: 'readonly',
+        HTMLTableCellElement: 'readonly',
+        SVGSVGElement: 'readonly',
+        KeyboardEvent: 'readonly',
+        MouseEvent: 'readonly',
+        Event: 'readonly',
+        requestAnimationFrame: 'readonly',
+        cancelAnimationFrame: 'readonly',
+        ResizeObserver: 'readonly',
+        IntersectionObserver: 'readonly',
+        MutationObserver: 'readonly',
+        Navigator: 'readonly',
+        navigator: 'readonly',
       },
     },
     plugins: {
@@ -59,6 +84,7 @@ export default [
     },
     rules: {
       // --- TypeScript ---
+      'no-unused-vars': 'off',  // Disabled in favor of @typescript-eslint version
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
       '@typescript-eslint/consistent-type-imports': ['warn', { prefer: 'type-imports' }],
@@ -67,7 +93,7 @@ export default [
       'react/jsx-uses-react': 'off',        // React 17+ JSX transform
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',             // TypeScript handles this
-      'react/display-name': 'warn',
+      'react/display-name': 'off',
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],

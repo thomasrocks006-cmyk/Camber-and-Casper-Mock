@@ -1,0 +1,17 @@
+modules = ["nodejs-20"]
+run = "pnpm run start"
+
+[nix]
+channel = "stable-24_05"
+
+[deployment]
+deploymentTarget = "static"
+build = ["sh", "-c", "pnpm install && pnpm run build:app"]
+publicDir = "dist"
+
+[[ports]]
+localPort = 5173
+externalPort = 80
+
+[env]
+NODE_ENV = "production"

@@ -4,7 +4,6 @@ import { RightPanel, PanelSection } from "@/components/right-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Mail,
   MessageSquare,
@@ -13,8 +12,8 @@ import {
   Clock,
   Send,
   Sparkles,
-  AlertTriangle,
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { MOCK_INBOX_THREADS } from "@/lib/mock-inbox";
 
 export default function Inbox() {
@@ -22,6 +21,9 @@ export default function Inbox() {
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(
     MOCK_INBOX_THREADS[0]?.id || null,
   );
+  const [sentDrafts, setSentDrafts] = useState<Set<string>>(new Set());
+  const [completedItems, setCompletedItems] = useState<Set<string>>(new Set());
+  const { toast } = useToast();
 
   const folders = [
     {
@@ -108,7 +110,7 @@ export default function Inbox() {
 
   const centre = (
     <div className="flex flex-col h-full space-y-4">
-      <div className="flex-1 overflow-auto border border-border rounded-xl bg-card divide-y divide-border/50">
+      <div className="flex-1 overflow-y-auto scroll-slim border border-border/50 rounded-xl bg-card divide-y divide-border/50">
         {visibleThreads.length === 0 && (
           <div className="p-12 text-center text-muted-foreground text-sm">
             No threads in this folder.
@@ -167,11 +169,14 @@ export default function Inbox() {
               {selectedThread.draft}
             </div>
             <div className="flex justify-end gap-2 mt-4">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => toast({ title: "Edit Mode", description: "Draft opened for editing." })}>
                 Edit
               </Button>
-              <Button size="sm" className="bg-primary text-primary-foreground">
-                <Send className="w-4 h-4 mr-2" /> Send
+              <Button size="sm" className="bg-primary text-primary-foreground" onClick={() => {
+                setSentDrafts(prev => new Set(prev).add(selectedThread!.id));
+                toast({ title: "Draft Sent", description: `Reply sent to ${selectedThread!.sender}.` });
+              }} disabled={sentDrafts.has(selectedThread?.id ?? "")}>
+                <Send className="w-4 h-4 mr-2" /> {sentDrafts.has(selectedThread?.id ?? "") ? "Sent" : "Send"}
               </Button>
             </div>
           </div>
@@ -182,7 +187,7 @@ export default function Inbox() {
 
   const rightPanel = selectedThread ? (
     <RightPanel title="Thread Intelligence">
-      <PanelSection title="Ironbark Synthesis">
+      <PanelSection title="Thread Synthesis">
         <div className="p-3 bg-secondary/50 rounded-lg border border-border text-sm text-foreground/80 space-y-2">
           <p>{selectedThread.rationale}</p>
         </div>
@@ -190,15 +195,24 @@ export default function Inbox() {
 
       <PanelSection title="Extracted Action Items">
         <div className="space-y-2">
-          {selectedThread.commitments.map((c, i) => (
-            <div
-              key={i}
-              className="flex items-start gap-2 p-2 rounded border border-border bg-card"
-            >
-              <div className="mt-0.5 w-4 h-4 rounded border border-primary/50 flex-shrink-0" />
-              <span className="text-sm text-foreground/90">{c}</span>
-            </div>
-          ))}
+          {selectedThread.commitments.map((c, i) => {
+            const key = `${selectedThread.id}-${i}`;
+            const done = completedItems.has(key);
+            return (
+              <div
+                key={i}
+                className={`flex items-start gap-2 p-2 rounded border border-border bg-card cursor-pointer transition-colors ${done ? 'opacity-50' : 'hover:bg-secondary/30'}`}
+                onClick={() => {
+                  setCompletedItems(prev => { const s = new Set(prev); done ? s.delete(key) : s.add(key); return s; });
+                }}
+              >
+                <div className={`mt-0.5 w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center ${done ? 'bg-primary border-primary' : 'border-primary/50'}`}>
+                  {done && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                </div>
+                <span className={`text-sm text-foreground/90 ${done ? 'line-through' : ''}`}>{c}</span>
+              </div>
+            );
+          })}
         </div>
       </PanelSection>
 
@@ -242,7 +256,7 @@ export default function Inbox() {
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-6 py-4 border-b border-border">
         <div>
-          <h1 className="text-xl font-semibold">Inbox</h1>
+          <h1 className="page-title">Inbox</h1>
           <p className="text-sm text-muted-foreground">
             Unified communications and intelligence
           </p>

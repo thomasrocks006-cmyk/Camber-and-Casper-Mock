@@ -11,10 +11,7 @@ import {
   MOCK_DEPLOYMENT_ENVELOPE,
 } from "@/lib/mock-readiness";
 import {
-  ShieldCheck,
-  Activity,
   BrainCircuit,
-  CheckCircle2,
   AlertTriangle,
   XCircle,
 } from "lucide-react";
@@ -264,7 +261,7 @@ export default function ReadinessLab() {
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between px-6 py-4 border-b border-border">
         <div>
-          <h1 className="text-xl font-semibold flex items-center gap-2">
+          <h1 className="page-title flex items-center gap-2">
             Readiness Lab{" "}
             <span className="text-xs font-medium px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
               BEC+RE
